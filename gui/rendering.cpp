@@ -39,6 +39,13 @@ void GUI::renderFunctions() {
     glPopAttrib();
 }
 void GUI::renderLoop() {
+    static auto& xmin = ParameterManager::instance().get<scalar>("domain.xmin");
+    static auto& xmax = ParameterManager::instance().get<scalar>("domain.xmax");
+    static auto& ymin = ParameterManager::instance().get<scalar>("domain.ymin");
+    static auto& ymax = ParameterManager::instance().get<scalar>("domain.ymax");
+    //xmin = 0x1.e83a227ae4c3ep-3; ymin = -0x1.9b64feac755ffp-26; xmax = 0x1.e83a227ae4ddap-3;ymax =  -0x1.9b64f1b139c55p-26;
+    
+
     show_demo_window = true;
     ImGuiIO& io = ImGui::GetIO(); (void)io;
     while (!shouldStop && !glfwWindowShouldClose(window)) {
@@ -52,16 +59,27 @@ void GUI::renderLoop() {
         glClear(GL_COLOR_BUFFER_BIT);
 
         renderFunctions();
-        // auto dt = 1.0 / 400.0;
-        // static auto lastTime = ParameterManager::instance().get<double>("sim.time") - dt;
-        // auto currTime = ParameterManager::instance().get<double>("sim.time");
-        // if (currTime > lastTime + dt && m_ffmpegPipe != nullptr) {
-        //     lastTime = currTime;
-        //     static int32_t* buffer = new int32_t[screenWidth * screenHeight];
-        //     glReadPixels(0, 0, screenWidth, screenHeight, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
-        //     fwrite(buffer, sizeof(int) * screenWidth * screenHeight, 1, m_ffmpegPipe);
 
-        // }
+#define WATCH(type, ns, id)\
+  static type id = ParameterManager::instance().get<type>(std::string(#ns) +"." + #id);\
+  if (ParameterManager::instance().get<type>(std::string(#ns) +"." + #id) != id) {\
+      std::cout << "Parameter " << std::string(#ns) << "." << std::string(#id) << " changed from " << id << " to " << ParameterManager::instance().get<type>(std::string(#ns) +"." + #id) << std::endl;\
+      id = ParameterManager::instance().get<type>(std::string(#ns) +"." + #id);\
+      dirty = true;\
+  }
+        bool dirty = false;
+        WATCH(scalar, domain, xmin);
+        WATCH(scalar, domain, xmax);
+        WATCH(scalar, domain, ymin);
+        WATCH(scalar, domain, ymax);
+
+
+         if (m_ffmpegPipe != nullptr && dirty) {
+             static int32_t* buffer = new int32_t[screenWidth * screenHeight];
+             glReadPixels(0, 0, screenWidth, screenHeight, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
+             fwrite(buffer, sizeof(int) * screenWidth * screenHeight, 1, m_ffmpegPipe);
+
+         }
 
         ImGui::NewFrame();
         //ImGui::ShowDemoWindow(&show_demo_window);
@@ -79,6 +97,10 @@ void GUI::renderLoop() {
 
     }
     if (m_ffmpegPipe != nullptr)
+#ifdef WIN32
+        _pclose(m_ffmpegPipe);
+#else
         pclose(m_ffmpegPipe);
+#endif
     quit();
 }

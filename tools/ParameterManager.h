@@ -63,7 +63,7 @@ namespace detail {
 		template<class T> operator T& () { return boost::any_cast<T&>(val.value()); }
 	};
 }
-struct Range { detail::iAny min, max;};
+struct Range { detail::iAny min, max; };
 struct ParameterSettings {
 	std::string description = "";
 	bool constant = false;

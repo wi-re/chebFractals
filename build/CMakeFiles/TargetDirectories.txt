@@ -1,3 +1,0 @@
-/home/winchenbach/dev/chebFractals/build/CMakeFiles/gui.dir
-/home/winchenbach/dev/chebFractals/build/CMakeFiles/edit_cache.dir
-/home/winchenbach/dev/chebFractals/build/CMakeFiles/rebuild_cache.dir

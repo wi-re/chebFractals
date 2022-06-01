@@ -232,7 +232,7 @@ std::pair<float, float> updateField(float* data) {
 
     auto [domainMin, domainMax] = getDomain();
 
-    #pragma omp parallel for
+    #pragma omp parallel for schedule(dynamic, 1)
     for (int32_t y = 0; y < ny; ++y) {
         for (int32_t x = 0; x < nx; ++x) {
             scalar xPos = ((scalar) x) / ((scalar) nx - 1.) * (scalar) (domainMax.x() - domainMin.x()) + domainMin.x();
@@ -266,7 +266,13 @@ else{
             if(std::abs(fx/dx) < 1e-5)break;
             // pos -= 0.1;
         }
-        scalarFieldData[y * nx + x] = (float) std::abs(pos);
+
+        auto cx = std::clamp(pos.real(), -1., 1.);
+        auto cy = std::clamp(pos.imag(), -1., 1.);
+
+        scalarFieldData[y * nx + x] = (float)std::sqrt(cx * cx + cy * cy);
+        //scalarFieldData[y * nx + x] = (float) std::abs(pos);
+        //scalarFieldData[y * nx + x] = (float)std::abs(evalFunction(pos));
 }
 
 

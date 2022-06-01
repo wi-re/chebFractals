@@ -4,7 +4,30 @@
 
 void GUI::keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
 	static bool emit = false;
-	if (action != GLFW_PRESS) { 
+	static auto& xmin = ParameterManager::instance().get<scalar>("domain.xmin");
+	static auto& xmax = ParameterManager::instance().get<scalar>("domain.xmax");
+	static auto& ymin = ParameterManager::instance().get<scalar>("domain.ymin");
+	static auto& ymax = ParameterManager::instance().get<scalar>("domain.ymax");
+	if (action != GLFW_PRESS) {
+		auto scaling = 1.05;
+		if (mods & GLFW_MOD_SHIFT)
+			scaling = 1.01;
+		if (mods & GLFW_MOD_CONTROL)
+			scaling = 1.5;
+		auto dx = (xmax - xmin);
+		auto dy = ymax - ymin;
+		auto xcenter = (xmax + xmin) / 2.;
+		auto ycenter = (ymax + ymin) / 2.;
+
+		switch (key) {
+		case GLFW_KEY_LEFT: xmin -= dx * (scaling - 1.); xmax -= dx * (scaling - 1.); break;
+		case GLFW_KEY_RIGHT: xmin += dx * (scaling - 1.); xmax += dx * (scaling - 1.); break;
+		case GLFW_KEY_UP: ymin += dy * (scaling - 1.); ymax += dy * (scaling - 1.); break;
+		case GLFW_KEY_DOWN: ymin -= dy * (scaling - 1.); ymax -= dy * (scaling - 1.); break;
+		case GLFW_KEY_APOSTROPHE: xmin = xcenter - dx / 2. * scaling; xmax = xcenter + dx / 2. * scaling; ymin = ycenter - dy / 2. * scaling; ymax = ycenter + dy / 2. * scaling; break;
+		case GLFW_KEY_RIGHT_BRACKET: xmin = xcenter - dx / 2. / scaling; xmax = xcenter + dx / 2. / scaling; ymin = ycenter - dy / 2. / scaling; ymax = ycenter + dy / 2. / scaling; break;
+		}
+
 		if (key == GLFW_KEY_E && action == GLFW_RELEASE)
 			emit = false;
 		
@@ -28,7 +51,16 @@ void GUI::keyCallback(GLFWwindow* window, int key, int scancode, int action, int
 	case GLFW_KEY_N: ParameterManager::instance().get<bool>("marching.solid") = !ParameterManager::instance().get<bool>("marching.solid"); break;
 	case GLFW_KEY_O: ParameterManager::instance().get<bool>("ptcl.render") = !ParameterManager::instance().get<bool>("ptcl.render"); break;
 	case GLFW_KEY_E: emit=true; break;
+	case GLFW_KEY_L: std::cout << std::setprecision(16) << std::hexfloat << xmin << " " << ymin << " " << xmax << " " << ymax << std::endl << std::defaultfloat; break;
+
+
 	}
+
+	{
+
+
+	}
+
 }
 bool trackingLeft = false;
 bool trackingRight = false;

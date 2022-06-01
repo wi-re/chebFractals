@@ -23,7 +23,11 @@ void GUI::uiFunctions() {
 void GUI::quit() {
     shouldStop = true;
     if (m_ffmpegPipe != nullptr)
+#ifdef WIN32
+        _pclose(m_ffmpegPipe);
+#else
         pclose(m_ffmpegPipe);
+#endif
     if (summaryFileOpen)
         summaryFile.close();
     ImGui_ImplOpenGL3_Shutdown();

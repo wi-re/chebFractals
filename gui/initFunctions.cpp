@@ -126,7 +126,11 @@ void GUI::initParameters(int argc, char* argv[]) {
             "-pix_fmt yuv420p -b:v 100M " 
             << argv[1];
             std::cout << sstream.str() << std::endl;
-        m_ffmpegPipe = popen(sstream.str().c_str(), "w");
+#ifdef WIN32
+            m_ffmpegPipe = _popen(sstream.str().c_str(), "wb");
+#else
+            m_ffmpegPipe = popen(sstream.str().c_str(), "w");
+#endif
     }
     else
         m_ffmpegPipe = nullptr;
