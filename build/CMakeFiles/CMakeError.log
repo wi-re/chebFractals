@@ -1,0 +1,149 @@
+Performing C++ SOURCE FILE Test CMAKE_HAVE_LIBC_PTHREAD failed with the following output:
+Change Dir: /home/winchenbach/dev/chebFractals/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make -f Makefile cmTC_d5d20/fast && /usr/bin/make  -f CMakeFiles/cmTC_d5d20.dir/build.make CMakeFiles/cmTC_d5d20.dir/build
+make[1]: Entering directory '/home/winchenbach/dev/chebFractals/build/CMakeFiles/CMakeTmp'
+Building CXX object CMakeFiles/cmTC_d5d20.dir/src.cxx.o
+/usr/bin/gcc-11 -DCMAKE_HAVE_LIBC_PTHREAD   -o CMakeFiles/cmTC_d5d20.dir/src.cxx.o -c /home/winchenbach/dev/chebFractals/build/CMakeFiles/CMakeTmp/src.cxx
+Linking CXX executable cmTC_d5d20
+/usr/local/bin/cmake -E cmake_link_script CMakeFiles/cmTC_d5d20.dir/link.txt --verbose=1
+/usr/bin/gcc-11 CMakeFiles/cmTC_d5d20.dir/src.cxx.o -o cmTC_d5d20 
+/usr/bin/ld: CMakeFiles/cmTC_d5d20.dir/src.cxx.o: in function `main':
+src.cxx:(.text+0x46): undefined reference to `pthread_create'
+/usr/bin/ld: src.cxx:(.text+0x52): undefined reference to `pthread_detach'
+/usr/bin/ld: src.cxx:(.text+0x5e): undefined reference to `pthread_cancel'
+/usr/bin/ld: src.cxx:(.text+0x6f): undefined reference to `pthread_join'
+collect2: error: ld returned 1 exit status
+make[1]: *** [CMakeFiles/cmTC_d5d20.dir/build.make:99: cmTC_d5d20] Error 1
+make[1]: Leaving directory '/home/winchenbach/dev/chebFractals/build/CMakeFiles/CMakeTmp'
+make: *** [Makefile:127: cmTC_d5d20/fast] Error 2
+
+
+Source file was:
+#include <pthread.h>
+
+static void* test_func(void* data)
+{
+  return data;
+}
+
+int main(void)
+{
+  pthread_t thread;
+  pthread_create(&thread, NULL, test_func, NULL);
+  pthread_detach(thread);
+  pthread_cancel(thread);
+  pthread_join(thread, NULL);
+  pthread_atfork(NULL, NULL, NULL);
+  pthread_exit(NULL);
+
+  return 0;
+}
+
+Determining if the function pthread_create exists in the pthreads failed with the following output:
+Change Dir: /home/winchenbach/dev/chebFractals/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make -f Makefile cmTC_f51f2/fast && /usr/bin/make  -f CMakeFiles/cmTC_f51f2.dir/build.make CMakeFiles/cmTC_f51f2.dir/build
+make[1]: Entering directory '/home/winchenbach/dev/chebFractals/build/CMakeFiles/CMakeTmp'
+Building CXX object CMakeFiles/cmTC_f51f2.dir/CheckFunctionExists.cxx.o
+/usr/bin/gcc-11   -DCHECK_FUNCTION_EXISTS=pthread_create -o CMakeFiles/cmTC_f51f2.dir/CheckFunctionExists.cxx.o -c /home/winchenbach/dev/chebFractals/build/CMakeFiles/CheckLibraryExists/CheckFunctionExists.cxx
+Linking CXX executable cmTC_f51f2
+/usr/local/bin/cmake -E cmake_link_script CMakeFiles/cmTC_f51f2.dir/link.txt --verbose=1
+/usr/bin/gcc-11  -DCHECK_FUNCTION_EXISTS=pthread_create CMakeFiles/cmTC_f51f2.dir/CheckFunctionExists.cxx.o -o cmTC_f51f2  -lpthreads 
+/usr/bin/ld: cannot find -lpthreads
+collect2: error: ld returned 1 exit status
+make[1]: *** [CMakeFiles/cmTC_f51f2.dir/build.make:99: cmTC_f51f2] Error 1
+make[1]: Leaving directory '/home/winchenbach/dev/chebFractals/build/CMakeFiles/CMakeTmp'
+make: *** [Makefile:127: cmTC_f51f2/fast] Error 2
+
+
+
+Determining if the function sgemm_ exists failed with the following output:
+Change Dir: /home/winchenbach/dev/chebFractals/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make -f Makefile cmTC_05214/fast && /usr/bin/make  -f CMakeFiles/cmTC_05214.dir/build.make CMakeFiles/cmTC_05214.dir/build
+make[1]: Entering directory '/home/winchenbach/dev/chebFractals/build/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_05214.dir/CheckFunctionExists.c.o
+/usr/bin/gcc-11   -DCHECK_FUNCTION_EXISTS=sgemm_ -o CMakeFiles/cmTC_05214.dir/CheckFunctionExists.c.o -c /usr/local/share/cmake-3.23/Modules/CheckFunctionExists.c
+Linking C executable cmTC_05214
+/usr/local/bin/cmake -E cmake_link_script CMakeFiles/cmTC_05214.dir/link.txt --verbose=1
+/usr/bin/gcc-11  -DCHECK_FUNCTION_EXISTS=sgemm_ CMakeFiles/cmTC_05214.dir/CheckFunctionExists.c.o -o cmTC_05214 
+/usr/bin/ld: CMakeFiles/cmTC_05214.dir/CheckFunctionExists.c.o: in function `main':
+CheckFunctionExists.c:(.text+0x14): undefined reference to `sgemm_'
+collect2: error: ld returned 1 exit status
+make[1]: *** [CMakeFiles/cmTC_05214.dir/build.make:99: cmTC_05214] Error 1
+make[1]: Leaving directory '/home/winchenbach/dev/chebFractals/build/CMakeFiles/CMakeTmp'
+make: *** [Makefile:127: cmTC_05214/fast] Error 2
+
+
+
+Determining if the function cheev_ exists failed with the following output:
+Change Dir: /home/winchenbach/dev/chebFractals/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make -f Makefile cmTC_4731e/fast && /usr/bin/make  -f CMakeFiles/cmTC_4731e.dir/build.make CMakeFiles/cmTC_4731e.dir/build
+make[1]: Entering directory '/home/winchenbach/dev/chebFractals/build/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_4731e.dir/CheckFunctionExists.c.o
+/usr/bin/gcc-11   -DCHECK_FUNCTION_EXISTS=cheev_ -o CMakeFiles/cmTC_4731e.dir/CheckFunctionExists.c.o -c /usr/local/share/cmake-3.23/Modules/CheckFunctionExists.c
+Linking C executable cmTC_4731e
+/usr/local/bin/cmake -E cmake_link_script CMakeFiles/cmTC_4731e.dir/link.txt --verbose=1
+/usr/bin/gcc-11  -DCHECK_FUNCTION_EXISTS=cheev_ CMakeFiles/cmTC_4731e.dir/CheckFunctionExists.c.o -o cmTC_4731e  /home/winchenbach/dev/vcpkg/installed/x64-linux/lib/libopenblas.a -lpthread -lm -ldl 
+/usr/bin/ld: CMakeFiles/cmTC_4731e.dir/CheckFunctionExists.c.o: in function `main':
+CheckFunctionExists.c:(.text+0x14): undefined reference to `cheev_'
+collect2: error: ld returned 1 exit status
+make[1]: *** [CMakeFiles/cmTC_4731e.dir/build.make:100: cmTC_4731e] Error 1
+make[1]: Leaving directory '/home/winchenbach/dev/chebFractals/build/CMakeFiles/CMakeTmp'
+make: *** [Makefile:127: cmTC_4731e/fast] Error 2
+
+
+
+Determining if the function cheev_ exists failed with the following output:
+Change Dir: /home/winchenbach/dev/chebFractals/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make -f Makefile cmTC_37f80/fast && /usr/bin/make  -f CMakeFiles/cmTC_37f80.dir/build.make CMakeFiles/cmTC_37f80.dir/build
+make[1]: Entering directory '/home/winchenbach/dev/chebFractals/build/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_37f80.dir/CheckFunctionExists.c.o
+/usr/bin/gcc-11   -DCHECK_FUNCTION_EXISTS=cheev_ -o CMakeFiles/cmTC_37f80.dir/CheckFunctionExists.c.o -c /usr/local/share/cmake-3.23/Modules/CheckFunctionExists.c
+Linking C executable cmTC_37f80
+/usr/local/bin/cmake -E cmake_link_script CMakeFiles/cmTC_37f80.dir/link.txt --verbose=1
+/usr/bin/gcc-11  -DCHECK_FUNCTION_EXISTS=cheev_ CMakeFiles/cmTC_37f80.dir/CheckFunctionExists.c.o -o cmTC_37f80  /home/winchenbach/dev/vcpkg/installed/x64-linux/lib/libopenblas.a /home/winchenbach/dev/vcpkg/installed/x64-linux/lib/libopenblas.a 
+/usr/bin/ld: CMakeFiles/cmTC_37f80.dir/CheckFunctionExists.c.o: in function `main':
+CheckFunctionExists.c:(.text+0x14): undefined reference to `cheev_'
+collect2: error: ld returned 1 exit status
+make[1]: *** [CMakeFiles/cmTC_37f80.dir/build.make:101: cmTC_37f80] Error 1
+make[1]: Leaving directory '/home/winchenbach/dev/chebFractals/build/CMakeFiles/CMakeTmp'
+make: *** [Makefile:127: cmTC_37f80/fast] Error 2
+
+
+
+Determining if the function cheev_ exists failed with the following output:
+Change Dir: /home/winchenbach/dev/chebFractals/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make -f Makefile cmTC_3ff35/fast && /usr/bin/make  -f CMakeFiles/cmTC_3ff35.dir/build.make CMakeFiles/cmTC_3ff35.dir/build
+make[1]: Entering directory '/home/winchenbach/dev/chebFractals/build/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_3ff35.dir/CheckFunctionExists.c.o
+/usr/bin/gcc-11   -DCHECK_FUNCTION_EXISTS=cheev_ -o CMakeFiles/cmTC_3ff35.dir/CheckFunctionExists.c.o -c /usr/local/share/cmake-3.23/Modules/CheckFunctionExists.c
+Linking C executable cmTC_3ff35
+/usr/local/bin/cmake -E cmake_link_script CMakeFiles/cmTC_3ff35.dir/link.txt --verbose=1
+/usr/bin/gcc-11  -DCHECK_FUNCTION_EXISTS=cheev_ CMakeFiles/cmTC_3ff35.dir/CheckFunctionExists.c.o -o cmTC_3ff35  /home/winchenbach/dev/vcpkg/installed/x64-linux/lib/liblapack.a /home/winchenbach/dev/vcpkg/installed/x64-linux/lib/libopenblas.a 
+/usr/bin/ld: /home/winchenbach/dev/vcpkg/installed/x64-linux/lib/liblapack.a(clanhe.f.o): in function `clanhe_':
+clanhe.f:(.text+0x158): undefined reference to `cabsf'
+/usr/bin/ld: clanhe.f:(.text+0x2aa): undefined reference to `cabsf'
+/usr/bin/ld: clanhe.f:(.text+0x3d4): undefined reference to `cabsf'
+/usr/bin/ld: clanhe.f:(.text+0x50d): undefined reference to `cabsf'
+/usr/bin/ld: /home/winchenbach/dev/vcpkg/installed/x64-linux/lib/liblapack.a(iparmq.f.o): in function `iparmq_':
+iparmq.f:(.text+0x290): undefined reference to `logf'
+/usr/bin/ld: iparmq.f:(.text+0x29d): undefined reference to `lroundf'
+/usr/bin/ld: /home/winchenbach/dev/vcpkg/installed/x64-linux/lib/liblapack.a(xerbla.f.o): in function `xerbla_':
+xerbla.f:(.text+0x55): undefined reference to `_gfortran_st_write'
+/usr/bin/ld: xerbla.f:(.text+0x60): undefined reference to `_gfortran_string_len_trim'
+/usr/bin/ld: xerbla.f:(.text+0x7a): undefined reference to `_gfortran_transfer_character_write'
+/usr/bin/ld: xerbla.f:(.text+0x8a): undefined reference to `_gfortran_transfer_integer_write'
+/usr/bin/ld: xerbla.f:(.text+0x92): undefined reference to `_gfortran_st_write_done'
+/usr/bin/ld: xerbla.f:(.text+0x9d): undefined reference to `_gfortran_stop_string'
+collect2: error: ld returned 1 exit status
+make[1]: *** [CMakeFiles/cmTC_3ff35.dir/build.make:101: cmTC_3ff35] Error 1
+make[1]: Leaving directory '/home/winchenbach/dev/chebFractals/build/CMakeFiles/CMakeTmp'
+make: *** [Makefile:127: cmTC_3ff35/fast] Error 2
+
+
+

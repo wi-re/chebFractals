@@ -1,0 +1,187 @@
+[
+{
+  "directory": "/home/winchenbach/dev/chebFractals/build",
+  "command": "/usr/bin/gcc-11 -DBOOST_ERROR_CODE_HEADER_ONLY -DNOMINMAX -D_CRT_SECURE_NO_WARNINGS -D_USE_MATH_DEFINES -I/home/winchenbach/dev/chebFractals/build -I/home/winchenbach/dev/chebFractals -I/usr/local/cuda-11.6/targets/x86_64-linux/include -isystem /home/winchenbach/dev/vcpkg/installed/x64-linux/include  -std=c++20 -fopenmp -O2 -g -DNDEBUG -o CMakeFiles/gui.dir/Source.cpp.o -c /home/winchenbach/dev/chebFractals/Source.cpp",
+  "file": "/home/winchenbach/dev/chebFractals/Source.cpp"
+},
+{
+  "directory": "/home/winchenbach/dev/chebFractals/build",
+  "command": "/usr/bin/gcc-11 -DBOOST_ERROR_CODE_HEADER_ONLY -DNOMINMAX -D_CRT_SECURE_NO_WARNINGS -D_USE_MATH_DEFINES -I/home/winchenbach/dev/chebFractals/build -I/home/winchenbach/dev/chebFractals -I/usr/local/cuda-11.6/targets/x86_64-linux/include -isystem /home/winchenbach/dev/vcpkg/installed/x64-linux/include  -std=c++20 -fopenmp -O2 -g -DNDEBUG -o CMakeFiles/gui.dir/cheb/Domain.cpp.o -c /home/winchenbach/dev/chebFractals/cheb/Domain.cpp",
+  "file": "/home/winchenbach/dev/chebFractals/cheb/Domain.cpp"
+},
+{
+  "directory": "/home/winchenbach/dev/chebFractals/build",
+  "command": "/usr/bin/gcc-11 -DBOOST_ERROR_CODE_HEADER_ONLY -DNOMINMAX -D_CRT_SECURE_NO_WARNINGS -D_USE_MATH_DEFINES -I/home/winchenbach/dev/chebFractals/build -I/home/winchenbach/dev/chebFractals -I/usr/local/cuda-11.6/targets/x86_64-linux/include -isystem /home/winchenbach/dev/vcpkg/installed/x64-linux/include  -std=c++20 -fopenmp -O2 -g -DNDEBUG -o CMakeFiles/gui.dir/cheb/Function.cpp.o -c /home/winchenbach/dev/chebFractals/cheb/Function.cpp",
+  "file": "/home/winchenbach/dev/chebFractals/cheb/Function.cpp"
+},
+{
+  "directory": "/home/winchenbach/dev/chebFractals/build",
+  "command": "/usr/bin/gcc-11 -DBOOST_ERROR_CODE_HEADER_ONLY -DNOMINMAX -D_CRT_SECURE_NO_WARNINGS -D_USE_MATH_DEFINES -I/home/winchenbach/dev/chebFractals/build -I/home/winchenbach/dev/chebFractals -I/usr/local/cuda-11.6/targets/x86_64-linux/include -isystem /home/winchenbach/dev/vcpkg/installed/x64-linux/include  -std=c++20 -fopenmp -O2 -g -DNDEBUG -o CMakeFiles/gui.dir/cheb/Interval.cpp.o -c /home/winchenbach/dev/chebFractals/cheb/Interval.cpp",
+  "file": "/home/winchenbach/dev/chebFractals/cheb/Interval.cpp"
+},
+{
+  "directory": "/home/winchenbach/dev/chebFractals/build",
+  "command": "/usr/bin/gcc-11 -DBOOST_ERROR_CODE_HEADER_ONLY -DNOMINMAX -D_CRT_SECURE_NO_WARNINGS -D_USE_MATH_DEFINES -I/home/winchenbach/dev/chebFractals/build -I/home/winchenbach/dev/chebFractals -I/usr/local/cuda-11.6/targets/x86_64-linux/include -isystem /home/winchenbach/dev/vcpkg/installed/x64-linux/include  -std=c++20 -fopenmp -O2 -g -DNDEBUG -o CMakeFiles/gui.dir/cheb/IntervalFunction.cpp.o -c /home/winchenbach/dev/chebFractals/cheb/IntervalFunction.cpp",
+  "file": "/home/winchenbach/dev/chebFractals/cheb/IntervalFunction.cpp"
+},
+{
+  "directory": "/home/winchenbach/dev/chebFractals/build",
+  "command": "/usr/bin/gcc-11 -DBOOST_ERROR_CODE_HEADER_ONLY -DNOMINMAX -D_CRT_SECURE_NO_WARNINGS -D_USE_MATH_DEFINES -I/home/winchenbach/dev/chebFractals/build -I/home/winchenbach/dev/chebFractals -I/usr/local/cuda-11.6/targets/x86_64-linux/include -isystem /home/winchenbach/dev/vcpkg/installed/x64-linux/include  -std=c++20 -fopenmp -O2 -g -DNDEBUG -o CMakeFiles/gui.dir/cheb/algorithms.cpp.o -c /home/winchenbach/dev/chebFractals/cheb/algorithms.cpp",
+  "file": "/home/winchenbach/dev/chebFractals/cheb/algorithms.cpp"
+},
+{
+  "directory": "/home/winchenbach/dev/chebFractals/build",
+  "command": "/usr/bin/gcc-11 -DBOOST_ERROR_CODE_HEADER_ONLY -DNOMINMAX -D_CRT_SECURE_NO_WARNINGS -D_USE_MATH_DEFINES -I/home/winchenbach/dev/chebFractals/build -I/home/winchenbach/dev/chebFractals -I/usr/local/cuda-11.6/targets/x86_64-linux/include -isystem /home/winchenbach/dev/vcpkg/installed/x64-linux/include  -std=c++20 -fopenmp -O2 -g -DNDEBUG -o CMakeFiles/gui.dir/cheb/sturm.cpp.o -c /home/winchenbach/dev/chebFractals/cheb/sturm.cpp",
+  "file": "/home/winchenbach/dev/chebFractals/cheb/sturm.cpp"
+},
+{
+  "directory": "/home/winchenbach/dev/chebFractals/build",
+  "command": "/usr/bin/gcc-11 -DBOOST_ERROR_CODE_HEADER_ONLY -DNOMINMAX -D_CRT_SECURE_NO_WARNINGS -D_USE_MATH_DEFINES -I/home/winchenbach/dev/chebFractals/build -I/home/winchenbach/dev/chebFractals -I/usr/local/cuda-11.6/targets/x86_64-linux/include -isystem /home/winchenbach/dev/vcpkg/installed/x64-linux/include  -std=c++20 -fopenmp -O2 -g -DNDEBUG -o CMakeFiles/gui.dir/cheb/utilities.cpp.o -c /home/winchenbach/dev/chebFractals/cheb/utilities.cpp",
+  "file": "/home/winchenbach/dev/chebFractals/cheb/utilities.cpp"
+},
+{
+  "directory": "/home/winchenbach/dev/chebFractals/build",
+  "command": "/usr/bin/gcc-11 -DBOOST_ERROR_CODE_HEADER_ONLY -DNOMINMAX -D_CRT_SECURE_NO_WARNINGS -D_USE_MATH_DEFINES -I/home/winchenbach/dev/chebFractals/build -I/home/winchenbach/dev/chebFractals -I/usr/local/cuda-11.6/targets/x86_64-linux/include -isystem /home/winchenbach/dev/vcpkg/installed/x64-linux/include  -std=c++20 -fopenmp -O2 -g -DNDEBUG -o CMakeFiles/gui.dir/cheb/vectorutil.cpp.o -c /home/winchenbach/dev/chebFractals/cheb/vectorutil.cpp",
+  "file": "/home/winchenbach/dev/chebFractals/cheb/vectorutil.cpp"
+},
+{
+  "directory": "/home/winchenbach/dev/chebFractals/build",
+  "command": "/usr/bin/gcc-11 -DBOOST_ERROR_CODE_HEADER_ONLY -DNOMINMAX -D_CRT_SECURE_NO_WARNINGS -D_USE_MATH_DEFINES -I/home/winchenbach/dev/chebFractals/build -I/home/winchenbach/dev/chebFractals -I/usr/local/cuda-11.6/targets/x86_64-linux/include -isystem /home/winchenbach/dev/vcpkg/installed/x64-linux/include  -std=c++20 -fopenmp -O2 -g -DNDEBUG -o CMakeFiles/gui.dir/gui/OSD.cpp.o -c /home/winchenbach/dev/chebFractals/gui/OSD.cpp",
+  "file": "/home/winchenbach/dev/chebFractals/gui/OSD.cpp"
+},
+{
+  "directory": "/home/winchenbach/dev/chebFractals/build",
+  "command": "/usr/bin/gcc-11 -DBOOST_ERROR_CODE_HEADER_ONLY -DNOMINMAX -D_CRT_SECURE_NO_WARNINGS -D_USE_MATH_DEFINES -I/home/winchenbach/dev/chebFractals/build -I/home/winchenbach/dev/chebFractals -I/usr/local/cuda-11.6/targets/x86_64-linux/include -isystem /home/winchenbach/dev/vcpkg/installed/x64-linux/include  -std=c++20 -fopenmp -O2 -g -DNDEBUG -o CMakeFiles/gui.dir/gui/glui.cpp.o -c /home/winchenbach/dev/chebFractals/gui/glui.cpp",
+  "file": "/home/winchenbach/dev/chebFractals/gui/glui.cpp"
+},
+{
+  "directory": "/home/winchenbach/dev/chebFractals/build",
+  "command": "/usr/bin/gcc-11 -DBOOST_ERROR_CODE_HEADER_ONLY -DNOMINMAX -D_CRT_SECURE_NO_WARNINGS -D_USE_MATH_DEFINES -I/home/winchenbach/dev/chebFractals/build -I/home/winchenbach/dev/chebFractals -I/usr/local/cuda-11.6/targets/x86_64-linux/include -isystem /home/winchenbach/dev/vcpkg/installed/x64-linux/include  -std=c++20 -fopenmp -O2 -g -DNDEBUG -o CMakeFiles/gui.dir/gui/initFunctions.cpp.o -c /home/winchenbach/dev/chebFractals/gui/initFunctions.cpp",
+  "file": "/home/winchenbach/dev/chebFractals/gui/initFunctions.cpp"
+},
+{
+  "directory": "/home/winchenbach/dev/chebFractals/build",
+  "command": "/usr/bin/gcc-11 -DBOOST_ERROR_CODE_HEADER_ONLY -DNOMINMAX -D_CRT_SECURE_NO_WARNINGS -D_USE_MATH_DEFINES -I/home/winchenbach/dev/chebFractals/build -I/home/winchenbach/dev/chebFractals -I/usr/local/cuda-11.6/targets/x86_64-linux/include -isystem /home/winchenbach/dev/vcpkg/installed/x64-linux/include  -std=c++20 -fopenmp -O2 -g -DNDEBUG -o CMakeFiles/gui.dir/gui/interaction.cpp.o -c /home/winchenbach/dev/chebFractals/gui/interaction.cpp",
+  "file": "/home/winchenbach/dev/chebFractals/gui/interaction.cpp"
+},
+{
+  "directory": "/home/winchenbach/dev/chebFractals/build",
+  "command": "/usr/bin/gcc-11 -DBOOST_ERROR_CODE_HEADER_ONLY -DNOMINMAX -D_CRT_SECURE_NO_WARNINGS -D_USE_MATH_DEFINES -I/home/winchenbach/dev/chebFractals/build -I/home/winchenbach/dev/chebFractals -I/usr/local/cuda-11.6/targets/x86_64-linux/include -isystem /home/winchenbach/dev/vcpkg/installed/x64-linux/include  -std=c++20 -fopenmp -O2 -g -DNDEBUG -o CMakeFiles/gui.dir/gui/logWindow.cpp.o -c /home/winchenbach/dev/chebFractals/gui/logWindow.cpp",
+  "file": "/home/winchenbach/dev/chebFractals/gui/logWindow.cpp"
+},
+{
+  "directory": "/home/winchenbach/dev/chebFractals/build",
+  "command": "/usr/bin/gcc-11 -DBOOST_ERROR_CODE_HEADER_ONLY -DNOMINMAX -D_CRT_SECURE_NO_WARNINGS -D_USE_MATH_DEFINES -I/home/winchenbach/dev/chebFractals/build -I/home/winchenbach/dev/chebFractals -I/usr/local/cuda-11.6/targets/x86_64-linux/include -isystem /home/winchenbach/dev/vcpkg/installed/x64-linux/include  -std=c++20 -fopenmp -O2 -g -DNDEBUG -o CMakeFiles/gui.dir/gui/rayWindow.cpp.o -c /home/winchenbach/dev/chebFractals/gui/rayWindow.cpp",
+  "file": "/home/winchenbach/dev/chebFractals/gui/rayWindow.cpp"
+},
+{
+  "directory": "/home/winchenbach/dev/chebFractals/build",
+  "command": "/usr/bin/gcc-11 -DBOOST_ERROR_CODE_HEADER_ONLY -DNOMINMAX -D_CRT_SECURE_NO_WARNINGS -D_USE_MATH_DEFINES -I/home/winchenbach/dev/chebFractals/build -I/home/winchenbach/dev/chebFractals -I/usr/local/cuda-11.6/targets/x86_64-linux/include -isystem /home/winchenbach/dev/vcpkg/installed/x64-linux/include  -std=c++20 -fopenmp -O2 -g -DNDEBUG -o CMakeFiles/gui.dir/gui/rendering.cpp.o -c /home/winchenbach/dev/chebFractals/gui/rendering.cpp",
+  "file": "/home/winchenbach/dev/chebFractals/gui/rendering.cpp"
+},
+{
+  "directory": "/home/winchenbach/dev/chebFractals/build",
+  "command": "/usr/bin/gcc-11 -DBOOST_ERROR_CODE_HEADER_ONLY -DNOMINMAX -D_CRT_SECURE_NO_WARNINGS -D_USE_MATH_DEFINES -I/home/winchenbach/dev/chebFractals/build -I/home/winchenbach/dev/chebFractals -I/usr/local/cuda-11.6/targets/x86_64-linux/include -isystem /home/winchenbach/dev/vcpkg/installed/x64-linux/include  -std=c++20 -fopenmp -O2 -g -DNDEBUG -o CMakeFiles/gui.dir/gui/timeWindow.cpp.o -c /home/winchenbach/dev/chebFractals/gui/timeWindow.cpp",
+  "file": "/home/winchenbach/dev/chebFractals/gui/timeWindow.cpp"
+},
+{
+  "directory": "/home/winchenbach/dev/chebFractals/build",
+  "command": "/usr/bin/gcc-11 -DBOOST_ERROR_CODE_HEADER_ONLY -DNOMINMAX -D_CRT_SECURE_NO_WARNINGS -D_USE_MATH_DEFINES -I/home/winchenbach/dev/chebFractals/build -I/home/winchenbach/dev/chebFractals -I/usr/local/cuda-11.6/targets/x86_64-linux/include -isystem /home/winchenbach/dev/vcpkg/installed/x64-linux/include  -std=c++20 -fopenmp -O2 -g -DNDEBUG -o CMakeFiles/gui.dir/imgui/imgui.cpp.o -c /home/winchenbach/dev/chebFractals/imgui/imgui.cpp",
+  "file": "/home/winchenbach/dev/chebFractals/imgui/imgui.cpp"
+},
+{
+  "directory": "/home/winchenbach/dev/chebFractals/build",
+  "command": "/usr/bin/gcc-11 -DBOOST_ERROR_CODE_HEADER_ONLY -DNOMINMAX -D_CRT_SECURE_NO_WARNINGS -D_USE_MATH_DEFINES -I/home/winchenbach/dev/chebFractals/build -I/home/winchenbach/dev/chebFractals -I/usr/local/cuda-11.6/targets/x86_64-linux/include -isystem /home/winchenbach/dev/vcpkg/installed/x64-linux/include  -std=c++20 -fopenmp -O2 -g -DNDEBUG -o CMakeFiles/gui.dir/imgui/imgui_demo.cpp.o -c /home/winchenbach/dev/chebFractals/imgui/imgui_demo.cpp",
+  "file": "/home/winchenbach/dev/chebFractals/imgui/imgui_demo.cpp"
+},
+{
+  "directory": "/home/winchenbach/dev/chebFractals/build",
+  "command": "/usr/bin/gcc-11 -DBOOST_ERROR_CODE_HEADER_ONLY -DNOMINMAX -D_CRT_SECURE_NO_WARNINGS -D_USE_MATH_DEFINES -I/home/winchenbach/dev/chebFractals/build -I/home/winchenbach/dev/chebFractals -I/usr/local/cuda-11.6/targets/x86_64-linux/include -isystem /home/winchenbach/dev/vcpkg/installed/x64-linux/include  -std=c++20 -fopenmp -O2 -g -DNDEBUG -o CMakeFiles/gui.dir/imgui/imgui_draw.cpp.o -c /home/winchenbach/dev/chebFractals/imgui/imgui_draw.cpp",
+  "file": "/home/winchenbach/dev/chebFractals/imgui/imgui_draw.cpp"
+},
+{
+  "directory": "/home/winchenbach/dev/chebFractals/build",
+  "command": "/usr/bin/gcc-11 -DBOOST_ERROR_CODE_HEADER_ONLY -DNOMINMAX -D_CRT_SECURE_NO_WARNINGS -D_USE_MATH_DEFINES -I/home/winchenbach/dev/chebFractals/build -I/home/winchenbach/dev/chebFractals -I/usr/local/cuda-11.6/targets/x86_64-linux/include -isystem /home/winchenbach/dev/vcpkg/installed/x64-linux/include  -std=c++20 -fopenmp -O2 -g -DNDEBUG -o CMakeFiles/gui.dir/imgui/imgui_impl_glfw.cpp.o -c /home/winchenbach/dev/chebFractals/imgui/imgui_impl_glfw.cpp",
+  "file": "/home/winchenbach/dev/chebFractals/imgui/imgui_impl_glfw.cpp"
+},
+{
+  "directory": "/home/winchenbach/dev/chebFractals/build",
+  "command": "/usr/bin/gcc-11 -DBOOST_ERROR_CODE_HEADER_ONLY -DNOMINMAX -D_CRT_SECURE_NO_WARNINGS -D_USE_MATH_DEFINES -I/home/winchenbach/dev/chebFractals/build -I/home/winchenbach/dev/chebFractals -I/usr/local/cuda-11.6/targets/x86_64-linux/include -isystem /home/winchenbach/dev/vcpkg/installed/x64-linux/include  -std=c++20 -fopenmp -O2 -g -DNDEBUG -o CMakeFiles/gui.dir/imgui/imgui_impl_opengl3.cpp.o -c /home/winchenbach/dev/chebFractals/imgui/imgui_impl_opengl3.cpp",
+  "file": "/home/winchenbach/dev/chebFractals/imgui/imgui_impl_opengl3.cpp"
+},
+{
+  "directory": "/home/winchenbach/dev/chebFractals/build",
+  "command": "/usr/bin/gcc-11 -DBOOST_ERROR_CODE_HEADER_ONLY -DNOMINMAX -D_CRT_SECURE_NO_WARNINGS -D_USE_MATH_DEFINES -I/home/winchenbach/dev/chebFractals/build -I/home/winchenbach/dev/chebFractals -I/usr/local/cuda-11.6/targets/x86_64-linux/include -isystem /home/winchenbach/dev/vcpkg/installed/x64-linux/include  -std=c++20 -fopenmp -O2 -g -DNDEBUG -o CMakeFiles/gui.dir/imgui/imgui_tables.cpp.o -c /home/winchenbach/dev/chebFractals/imgui/imgui_tables.cpp",
+  "file": "/home/winchenbach/dev/chebFractals/imgui/imgui_tables.cpp"
+},
+{
+  "directory": "/home/winchenbach/dev/chebFractals/build",
+  "command": "/usr/bin/gcc-11 -DBOOST_ERROR_CODE_HEADER_ONLY -DNOMINMAX -D_CRT_SECURE_NO_WARNINGS -D_USE_MATH_DEFINES -I/home/winchenbach/dev/chebFractals/build -I/home/winchenbach/dev/chebFractals -I/usr/local/cuda-11.6/targets/x86_64-linux/include -isystem /home/winchenbach/dev/vcpkg/installed/x64-linux/include  -std=c++20 -fopenmp -O2 -g -DNDEBUG -o CMakeFiles/gui.dir/imgui/imgui_widgets.cpp.o -c /home/winchenbach/dev/chebFractals/imgui/imgui_widgets.cpp",
+  "file": "/home/winchenbach/dev/chebFractals/imgui/imgui_widgets.cpp"
+},
+{
+  "directory": "/home/winchenbach/dev/chebFractals/build",
+  "command": "/usr/bin/gcc-11 -DBOOST_ERROR_CODE_HEADER_ONLY -DNOMINMAX -D_CRT_SECURE_NO_WARNINGS -D_USE_MATH_DEFINES -I/home/winchenbach/dev/chebFractals/build -I/home/winchenbach/dev/chebFractals -I/usr/local/cuda-11.6/targets/x86_64-linux/include -isystem /home/winchenbach/dev/vcpkg/installed/x64-linux/include  -std=c++20 -fopenmp -O2 -g -DNDEBUG -o CMakeFiles/gui.dir/imgui/implot.cpp.o -c /home/winchenbach/dev/chebFractals/imgui/implot.cpp",
+  "file": "/home/winchenbach/dev/chebFractals/imgui/implot.cpp"
+},
+{
+  "directory": "/home/winchenbach/dev/chebFractals/build",
+  "command": "/usr/bin/gcc-11 -DBOOST_ERROR_CODE_HEADER_ONLY -DNOMINMAX -D_CRT_SECURE_NO_WARNINGS -D_USE_MATH_DEFINES -I/home/winchenbach/dev/chebFractals/build -I/home/winchenbach/dev/chebFractals -I/usr/local/cuda-11.6/targets/x86_64-linux/include -isystem /home/winchenbach/dev/vcpkg/installed/x64-linux/include  -std=c++20 -fopenmp -O2 -g -DNDEBUG -o CMakeFiles/gui.dir/imgui/implot_items.cpp.o -c /home/winchenbach/dev/chebFractals/imgui/implot_items.cpp",
+  "file": "/home/winchenbach/dev/chebFractals/imgui/implot_items.cpp"
+},
+{
+  "directory": "/home/winchenbach/dev/chebFractals/build",
+  "command": "/usr/bin/gcc-11 -DBOOST_ERROR_CODE_HEADER_ONLY -DNOMINMAX -D_CRT_SECURE_NO_WARNINGS -D_USE_MATH_DEFINES -I/home/winchenbach/dev/chebFractals/build -I/home/winchenbach/dev/chebFractals -I/usr/local/cuda-11.6/targets/x86_64-linux/include -isystem /home/winchenbach/dev/vcpkg/installed/x64-linux/include  -std=c++20 -fopenmp -O2 -g -DNDEBUG -o CMakeFiles/gui.dir/simulation/SPH.cpp.o -c /home/winchenbach/dev/chebFractals/simulation/SPH.cpp",
+  "file": "/home/winchenbach/dev/chebFractals/simulation/SPH.cpp"
+},
+{
+  "directory": "/home/winchenbach/dev/chebFractals/build",
+  "command": "/usr/bin/gcc-11 -DBOOST_ERROR_CODE_HEADER_ONLY -DNOMINMAX -D_CRT_SECURE_NO_WARNINGS -D_USE_MATH_DEFINES -I/home/winchenbach/dev/chebFractals/build -I/home/winchenbach/dev/chebFractals -I/usr/local/cuda-11.6/targets/x86_64-linux/include -isystem /home/winchenbach/dev/vcpkg/installed/x64-linux/include  -std=c++20 -fopenmp -O2 -g -DNDEBUG -o CMakeFiles/gui.dir/simulation/Triangle.cpp.o -c /home/winchenbach/dev/chebFractals/simulation/Triangle.cpp",
+  "file": "/home/winchenbach/dev/chebFractals/simulation/Triangle.cpp"
+},
+{
+  "directory": "/home/winchenbach/dev/chebFractals/build",
+  "command": "/usr/bin/gcc-11 -DBOOST_ERROR_CODE_HEADER_ONLY -DNOMINMAX -D_CRT_SECURE_NO_WARNINGS -D_USE_MATH_DEFINES -I/home/winchenbach/dev/chebFractals/build -I/home/winchenbach/dev/chebFractals -I/usr/local/cuda-11.6/targets/x86_64-linux/include -isystem /home/winchenbach/dev/vcpkg/installed/x64-linux/include  -std=c++20 -fopenmp -O2 -g -DNDEBUG -o CMakeFiles/gui.dir/simulation/fluidMechanics.cpp.o -c /home/winchenbach/dev/chebFractals/simulation/fluidMechanics.cpp",
+  "file": "/home/winchenbach/dev/chebFractals/simulation/fluidMechanics.cpp"
+},
+{
+  "directory": "/home/winchenbach/dev/chebFractals/build",
+  "command": "/usr/bin/gcc-11 -DBOOST_ERROR_CODE_HEADER_ONLY -DNOMINMAX -D_CRT_SECURE_NO_WARNINGS -D_USE_MATH_DEFINES -I/home/winchenbach/dev/chebFractals/build -I/home/winchenbach/dev/chebFractals -I/usr/local/cuda-11.6/targets/x86_64-linux/include -isystem /home/winchenbach/dev/vcpkg/installed/x64-linux/include  -std=c++20 -fopenmp -O2 -g -DNDEBUG -o CMakeFiles/gui.dir/simulation/marchingSquares.cpp.o -c /home/winchenbach/dev/chebFractals/simulation/marchingSquares.cpp",
+  "file": "/home/winchenbach/dev/chebFractals/simulation/marchingSquares.cpp"
+},
+{
+  "directory": "/home/winchenbach/dev/chebFractals/build",
+  "command": "/usr/bin/gcc-11 -DBOOST_ERROR_CODE_HEADER_ONLY -DNOMINMAX -D_CRT_SECURE_NO_WARNINGS -D_USE_MATH_DEFINES -I/home/winchenbach/dev/chebFractals/build -I/home/winchenbach/dev/chebFractals -I/usr/local/cuda-11.6/targets/x86_64-linux/include -isystem /home/winchenbach/dev/vcpkg/installed/x64-linux/include  -std=c++20 -fopenmp -O2 -g -DNDEBUG -o CMakeFiles/gui.dir/simulation/rayRender.cpp.o -c /home/winchenbach/dev/chebFractals/simulation/rayRender.cpp",
+  "file": "/home/winchenbach/dev/chebFractals/simulation/rayRender.cpp"
+},
+{
+  "directory": "/home/winchenbach/dev/chebFractals/build",
+  "command": "/usr/bin/gcc-11 -DBOOST_ERROR_CODE_HEADER_ONLY -DNOMINMAX -D_CRT_SECURE_NO_WARNINGS -D_USE_MATH_DEFINES -I/home/winchenbach/dev/chebFractals/build -I/home/winchenbach/dev/chebFractals -I/usr/local/cuda-11.6/targets/x86_64-linux/include -isystem /home/winchenbach/dev/vcpkg/installed/x64-linux/include  -std=c++20 -fopenmp -O2 -g -DNDEBUG -o CMakeFiles/gui.dir/simulation/simulationRender.cpp.o -c /home/winchenbach/dev/chebFractals/simulation/simulationRender.cpp",
+  "file": "/home/winchenbach/dev/chebFractals/simulation/simulationRender.cpp"
+},
+{
+  "directory": "/home/winchenbach/dev/chebFractals/build",
+  "command": "/usr/bin/gcc-11 -DBOOST_ERROR_CODE_HEADER_ONLY -DNOMINMAX -D_CRT_SECURE_NO_WARNINGS -D_USE_MATH_DEFINES -I/home/winchenbach/dev/chebFractals/build -I/home/winchenbach/dev/chebFractals -I/usr/local/cuda-11.6/targets/x86_64-linux/include -isystem /home/winchenbach/dev/vcpkg/installed/x64-linux/include  -std=c++20 -fopenmp -O2 -g -DNDEBUG -o CMakeFiles/gui.dir/simulation/utility.cpp.o -c /home/winchenbach/dev/chebFractals/simulation/utility.cpp",
+  "file": "/home/winchenbach/dev/chebFractals/simulation/utility.cpp"
+},
+{
+  "directory": "/home/winchenbach/dev/chebFractals/build",
+  "command": "/usr/bin/gcc-11 -DBOOST_ERROR_CODE_HEADER_ONLY -DNOMINMAX -D_CRT_SECURE_NO_WARNINGS -D_USE_MATH_DEFINES -I/home/winchenbach/dev/chebFractals/build -I/home/winchenbach/dev/chebFractals -I/usr/local/cuda-11.6/targets/x86_64-linux/include -isystem /home/winchenbach/dev/vcpkg/installed/x64-linux/include  -std=c++20 -fopenmp -O2 -g -DNDEBUG -o CMakeFiles/gui.dir/tools/ParameterManager.cpp.o -c /home/winchenbach/dev/chebFractals/tools/ParameterManager.cpp",
+  "file": "/home/winchenbach/dev/chebFractals/tools/ParameterManager.cpp"
+},
+{
+  "directory": "/home/winchenbach/dev/chebFractals/build",
+  "command": "/usr/bin/gcc-11 -DBOOST_ERROR_CODE_HEADER_ONLY -DNOMINMAX -D_CRT_SECURE_NO_WARNINGS -D_USE_MATH_DEFINES -I/home/winchenbach/dev/chebFractals/build -I/home/winchenbach/dev/chebFractals -I/usr/local/cuda-11.6/targets/x86_64-linux/include -isystem /home/winchenbach/dev/vcpkg/installed/x64-linux/include  -std=c++20 -fopenmp -O2 -g -DNDEBUG -o CMakeFiles/gui.dir/tools/color.cpp.o -c /home/winchenbach/dev/chebFractals/tools/color.cpp",
+  "file": "/home/winchenbach/dev/chebFractals/tools/color.cpp"
+},
+{
+  "directory": "/home/winchenbach/dev/chebFractals/build",
+  "command": "/usr/bin/gcc-11 -DBOOST_ERROR_CODE_HEADER_ONLY -DNOMINMAX -D_CRT_SECURE_NO_WARNINGS -D_USE_MATH_DEFINES -I/home/winchenbach/dev/chebFractals/build -I/home/winchenbach/dev/chebFractals -I/usr/local/cuda-11.6/targets/x86_64-linux/include -isystem /home/winchenbach/dev/vcpkg/installed/x64-linux/include  -std=c++20 -fopenmp -O2 -g -DNDEBUG -o CMakeFiles/gui.dir/tools/exceptionHandling.cpp.o -c /home/winchenbach/dev/chebFractals/tools/exceptionHandling.cpp",
+  "file": "/home/winchenbach/dev/chebFractals/tools/exceptionHandling.cpp"
+},
+{
+  "directory": "/home/winchenbach/dev/chebFractals/build",
+  "command": "/usr/bin/gcc-11 -DBOOST_ERROR_CODE_HEADER_ONLY -DNOMINMAX -D_CRT_SECURE_NO_WARNINGS -D_USE_MATH_DEFINES -I/home/winchenbach/dev/chebFractals/build -I/home/winchenbach/dev/chebFractals -I/usr/local/cuda-11.6/targets/x86_64-linux/include -isystem /home/winchenbach/dev/vcpkg/installed/x64-linux/include  -std=c++20 -fopenmp -O2 -g -DNDEBUG -o CMakeFiles/gui.dir/tools/timer.cpp.o -c /home/winchenbach/dev/chebFractals/tools/timer.cpp",
+  "file": "/home/winchenbach/dev/chebFractals/tools/timer.cpp"
+}
+]

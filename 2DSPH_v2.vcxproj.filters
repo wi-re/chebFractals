@@ -1,0 +1,237 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Source Files\tools">
+      <UniqueIdentifier>{fb639e2d-c702-4e98-9a9b-30c50591bbfc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\imgui">
+      <UniqueIdentifier>{d1feb52a-c687-4483-8099-b5d943939cd7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\gui">
+      <UniqueIdentifier>{8c9471d5-54e6-4f7a-9036-44caee3a28af}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\simulaiton">
+      <UniqueIdentifier>{0c297fc1-5ba3-4e15-846c-6d4d31a61319}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\cheb">
+      <UniqueIdentifier>{5612a72a-1f4f-4d68-9cbe-8130ef75f0ef}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="tools\color.cpp">
+      <Filter>Source Files\tools</Filter>
+    </ClCompile>
+    <ClCompile Include="tools\exceptionHandling.cpp">
+      <Filter>Source Files\tools</Filter>
+    </ClCompile>
+    <ClCompile Include="tools\timer.cpp">
+      <Filter>Source Files\tools</Filter>
+    </ClCompile>
+    <ClCompile Include="imgui\imgui.cpp">
+      <Filter>Source Files\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="imgui\imgui_demo.cpp">
+      <Filter>Source Files\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="imgui\imgui_draw.cpp">
+      <Filter>Source Files\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="imgui\imgui_impl_glfw.cpp">
+      <Filter>Source Files\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="imgui\imgui_impl_opengl3.cpp">
+      <Filter>Source Files\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="imgui\imgui_widgets.cpp">
+      <Filter>Source Files\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="Source.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="tools\ParameterManager.cpp">
+      <Filter>Source Files\tools</Filter>
+    </ClCompile>
+    <ClCompile Include="gui\glui.cpp">
+      <Filter>Source Files\gui</Filter>
+    </ClCompile>
+    <ClCompile Include="gui\initFunctions.cpp">
+      <Filter>Source Files\gui</Filter>
+    </ClCompile>
+    <ClCompile Include="gui\interaction.cpp">
+      <Filter>Source Files\gui</Filter>
+    </ClCompile>
+    <ClCompile Include="gui\logWindow.cpp">
+      <Filter>Source Files\gui</Filter>
+    </ClCompile>
+    <ClCompile Include="gui\OSD.cpp">
+      <Filter>Source Files\gui</Filter>
+    </ClCompile>
+    <ClCompile Include="gui\rendering.cpp">
+      <Filter>Source Files\gui</Filter>
+    </ClCompile>
+    <ClCompile Include="gui\timeWindow.cpp">
+      <Filter>Source Files\gui</Filter>
+    </ClCompile>
+    <ClCompile Include="simulation\SPH.cpp">
+      <Filter>Source Files\simulaiton</Filter>
+    </ClCompile>
+    <ClCompile Include="simulation\Triangle.cpp">
+      <Filter>Source Files\simulaiton</Filter>
+    </ClCompile>
+    <ClCompile Include="simulation\simulationRender.cpp">
+      <Filter>Source Files\simulaiton</Filter>
+    </ClCompile>
+    <ClCompile Include="simulation\marchingSquares.cpp">
+      <Filter>Source Files\simulaiton</Filter>
+    </ClCompile>
+    <ClCompile Include="simulation\rayRender.cpp">
+      <Filter>Source Files\simulaiton</Filter>
+    </ClCompile>
+    <ClCompile Include="gui\rayWindow.cpp">
+      <Filter>Source Files\gui</Filter>
+    </ClCompile>
+    <ClCompile Include="imgui\implot.cpp">
+      <Filter>Source Files\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="cheb\algorithms.cpp">
+      <Filter>Source Files\cheb</Filter>
+    </ClCompile>
+    <ClCompile Include="cheb\Domain.cpp">
+      <Filter>Source Files\cheb</Filter>
+    </ClCompile>
+    <ClCompile Include="cheb\Function.cpp">
+      <Filter>Source Files\cheb</Filter>
+    </ClCompile>
+    <ClCompile Include="cheb\Interval.cpp">
+      <Filter>Source Files\cheb</Filter>
+    </ClCompile>
+    <ClCompile Include="cheb\IntervalFunction.cpp">
+      <Filter>Source Files\cheb</Filter>
+    </ClCompile>
+    <ClCompile Include="cheb\utilities.cpp">
+      <Filter>Source Files\cheb</Filter>
+    </ClCompile>
+    <ClCompile Include="cheb\vectorutil.cpp">
+      <Filter>Source Files\cheb</Filter>
+    </ClCompile>
+    <ClCompile Include="test.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="simulation\utility.cpp">
+      <Filter>Source Files\simulaiton</Filter>
+    </ClCompile>
+    <ClCompile Include="simulation\fluidMechanics.cpp">
+      <Filter>Source Files\simulaiton</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="tools\color.h">
+      <Filter>Source Files\tools</Filter>
+    </ClInclude>
+    <ClInclude Include="tools\exceptionHandling.h">
+      <Filter>Source Files\tools</Filter>
+    </ClInclude>
+    <ClInclude Include="tools\timer.h">
+      <Filter>Source Files\tools</Filter>
+    </ClInclude>
+    <ClInclude Include="imgui\imconfig.h">
+      <Filter>Source Files\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="imgui\imgui.h">
+      <Filter>Source Files\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="imgui\imgui_impl_glfw.h">
+      <Filter>Source Files\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="imgui\imgui_impl_opengl3.h">
+      <Filter>Source Files\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="imgui\imgui_internal.h">
+      <Filter>Source Files\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="imgui\imstb_rectpack.h">
+      <Filter>Source Files\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="imgui\imstb_textedit.h">
+      <Filter>Source Files\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="imgui\imstb_truetype.h">
+      <Filter>Source Files\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="tools\ParameterManager.h">
+      <Filter>Source Files\tools</Filter>
+    </ClInclude>
+    <ClInclude Include="gui\glui.h">
+      <Filter>Source Files\gui</Filter>
+    </ClInclude>
+    <ClInclude Include="tools\stb_image.h">
+      <Filter>Source Files\tools</Filter>
+    </ClInclude>
+    <ClInclude Include="tools\stb_image_write.h">
+      <Filter>Source Files\tools</Filter>
+    </ClInclude>
+    <ClInclude Include="simulation\2DMath.h">
+      <Filter>Source Files\simulaiton</Filter>
+    </ClInclude>
+    <ClInclude Include="simulation\SPH.h">
+      <Filter>Source Files\simulaiton</Filter>
+    </ClInclude>
+    <ClInclude Include="simulation\tinycolormap.h">
+      <Filter>Source Files\simulaiton</Filter>
+    </ClInclude>
+    <ClInclude Include="tools\par_msquares.h">
+      <Filter>Source Files\tools</Filter>
+    </ClInclude>
+    <ClInclude Include="simulation\SPHRender.h">
+      <Filter>Source Files\simulaiton</Filter>
+    </ClInclude>
+    <ClInclude Include="imgui\implot.h">
+      <Filter>Source Files\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="cheb\algorithms.h">
+      <Filter>Source Files\cheb</Filter>
+    </ClInclude>
+    <ClInclude Include="cheb\cheb.h">
+      <Filter>Source Files\cheb</Filter>
+    </ClInclude>
+    <ClInclude Include="cheb\constants.h">
+      <Filter>Source Files\cheb</Filter>
+    </ClInclude>
+    <ClInclude Include="cheb\Domain.h">
+      <Filter>Source Files\cheb</Filter>
+    </ClInclude>
+    <ClInclude Include="cheb\Function.h">
+      <Filter>Source Files\cheb</Filter>
+    </ClInclude>
+    <ClInclude Include="cheb\Interval.h">
+      <Filter>Source Files\cheb</Filter>
+    </ClInclude>
+    <ClInclude Include="cheb\IntervalFunction.h">
+      <Filter>Source Files\cheb</Filter>
+    </ClInclude>
+    <ClInclude Include="cheb\utilities.h">
+      <Filter>Source Files\cheb</Filter>
+    </ClInclude>
+    <ClInclude Include="cheb\vectorutil.h">
+      <Filter>Source Files\cheb</Filter>
+    </ClInclude>
+    <ClInclude Include="test.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="simulation\config.h">
+      <Filter>Source Files\simulaiton</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
