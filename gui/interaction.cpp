@@ -34,21 +34,31 @@ bool trackingLeft = false;
 bool trackingRight = false;
 
 void GUI::mouseButtonCallback(GLFWwindow* window, int button, int action, int mods) {
-	auto [minDomain, maxDomain] = getDomain();
+auto [minDomain, maxDomain] = getDomain();
 
 
-	// if (action == GLFW_PRESS) {
-	// 	if (button == GLFW_MOUSE_BUTTON_LEFT) {
-	// 		trackingLeft = true;
-	// 		double x, y; glfwGetCursorPos(window, &x, &y);
-	// 		orig = vec(x / (scalar)screenWidth * domainWidth, (screenHeight - y) / (scalar)screenHeight * domainHeight);
-	// 	}
+        auto x = std::clamp(m_cursorPosition.x(), 0.0, (scalar)screenWidth) / (scalar)screenWidth;
+        auto y = std::clamp(m_cursorPosition.y(), 0.0, (scalar)screenHeight) / (scalar)screenHeight;
+        if (y > 1.0)
+            y -= 1.0;
+        y = 1.0 - y;
+        x *= maxDomain.x() - minDomain.x();
+        y *= maxDomain.y() - minDomain.y();
+        x+=minDomain.x();
+        y+=minDomain.y();
+
+	if (action == GLFW_PRESS) {
+		if (button == GLFW_MOUSE_BUTTON_LEFT) {
+			trackingLeft = true;
+			ParameterManager::instance().get<scalar>("path.x") = x;
+			ParameterManager::instance().get<scalar>("path.y") = y;
+		}
 	// 	if (button == GLFW_MOUSE_BUTTON_RIGHT) {
 	// 		trackingRight = true;
 	// 		double x, y; glfwGetCursorPos(window, &x, &y);
 	// 		target = vec(x / (scalar)screenWidth * domainWidth, (screenHeight - y) / (scalar)screenHeight * domainHeight);
 	// 	}
-	// }
+	}
 	if(action == GLFW_RELEASE) {
 		if (button == GLFW_MOUSE_BUTTON_LEFT)
 			trackingLeft = false;
@@ -61,14 +71,30 @@ void GUI::mouseButtonCallback(GLFWwindow* window, int button, int action, int mo
 #include <imgui/imgui_internal.h>
 void GUI::cursorPositionCallback(GLFWwindow* window, double xpos, double ypos) {
 	auto GImGui = ImGui::GetCurrentContext();
-	// if (trackingLeft) {
-	// 	orig = vec(xpos / (scalar)screenWidth * domainWidth, (screenHeight - ypos) / (scalar)screenHeight * domainHeight);
-	// }
 	// if (trackingRight) {
 	// 	//std::cout << xpos << " x " << ypos << " -> " << xpos / (scalar)screenWidth * domainWidth << " x " << ypos / (scalar)screenHeight * domainHeight << std::endl;
 	// 	target = vec(xpos / (scalar)screenWidth * domainWidth, (screenHeight - ypos) / (scalar)screenHeight * domainHeight);
 	// }
 	m_cursorPosition = vec(xpos, ypos);
+
+auto [minDomain, maxDomain] = getDomain();
+
+
+        auto x = std::clamp(m_cursorPosition.x(), 0.0, (scalar)screenWidth) / (scalar)screenWidth;
+        auto y = std::clamp(m_cursorPosition.y(), 0.0, (scalar)screenHeight) / (scalar)screenHeight;
+        if (y > 1.0)
+            y -= 1.0;
+        y = 1.0 - y;
+        x *= maxDomain.x() - minDomain.x();
+        y *= maxDomain.y() - minDomain.y();
+        x+=minDomain.x();
+        y+=minDomain.y();
+	if (trackingLeft) {
+		
+			ParameterManager::instance().get<scalar>("path.x") = x;
+			ParameterManager::instance().get<scalar>("path.y") = y;
+	}
+
 
 
 }

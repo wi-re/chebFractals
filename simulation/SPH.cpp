@@ -21,7 +21,7 @@ using clk = std::chrono::high_resolution_clock;
 scalar toMs(clk::duration dur) {
   return static_cast<scalar>(std::chrono::duration_cast<std::chrono::microseconds>(dur).count()) / scalar(1000.0);
 }
-
+std::vector<std::tuple<cheb::complex, cheb::complex, cheb::complex>> trace;
 std::filesystem::path expand(std::filesystem::path in) {
 	namespace fs = std::filesystem;
 #ifndef _WIN32
@@ -140,13 +140,15 @@ std::filesystem::path resolveFile(std::string fileName, std::vector<std::string>
 
 
 cheb::Function globalFunction;
+cheb::Function globalFunctionFirstDerivative;
+cheb::Function globalFunctionSecondDerivative;
 
 cheb::complex evalFunction(cheb::complex location){
-    static bool once = true;
-    if(once){
-        once = false;
-    }
-
-    cheb::svec coeffs = globalFunction.funs[0].coeffs();
-    return clenshaw(location, coeffs);
+    return clenshaw(location, globalFunction.funs[0].coeffs());
+}
+cheb::complex evalDerivative(cheb::complex location){
+    return clenshaw(location, globalFunctionFirstDerivative.funs[0].coeffs());
+}
+cheb::complex evalSecondDerivative(cheb::complex location){
+    return clenshaw(location, globalFunctionSecondDerivative.funs[0].coeffs());
 }

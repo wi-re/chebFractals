@@ -75,6 +75,7 @@
         "variant": "cpp",
         "__nullptr": "cpp",
         "*.ipp": "cpp",
-        "locale": "cpp"
+        "locale": "cpp",
+        "__locale": "cpp"
     }
 }

@@ -5,6 +5,7 @@
 #include <simulation/SPHRender.h>
 
 void GUI::RayWindow(bool* p_open) {
+    //return;
     ImGui::SetNextWindowSizeConstraints(ImVec2(1024, 512), ImVec2(FLT_MAX, FLT_MAX));
     if (!ImGui::Begin("Cheb Window", p_open))
     {
@@ -14,6 +15,8 @@ void GUI::RayWindow(bool* p_open) {
     static std::array<float, 1024> xValues;
     static std::array<float, 1024> yValues;
     static std::vector<float> coefficients;
+    static std::vector<float> coefficientsdx;
+    static std::vector<float> coefficientsd2x;
     static bool once = true;
     static float xmin = -1.;
     static float xmax = 1.;
@@ -30,7 +33,11 @@ void GUI::RayWindow(bool* p_open) {
     fmax = *std::max_element(yValues.begin(), yValues.begin() + 1024);
 
     for(const auto& coeff : globalFunction.funs[0].coeffs())
-    coefficients.push_back((float)coeff);
+    coefficients.push_back(std::abs((float)coeff));
+    for(const auto& coeff : globalFunctionFirstDerivative.funs[0].coeffs())
+    coefficientsdx.push_back(std::abs((float)coeff));
+    for(const auto& coeff : globalFunctionSecondDerivative.funs[0].coeffs())
+    coefficientsd2x.push_back(std::abs((float)coeff));
 
     once = false;
     }
@@ -41,8 +48,8 @@ void GUI::RayWindow(bool* p_open) {
 
     if (ImPlot::BeginPlot("Absolute plot", ImVec2(1024,256))) {
         ImPlot::SetupAxes("x","f(x)");
-        ImPlot::PushStyleVar(ImPlotStyleVar_LineWeight, 7.5f);
-        ImPlot::PlotLine("Implicit", xValues.data(), yValues.data(), 1024);
+        ImPlot::PushStyleVar(ImPlotStyleVar_LineWeight, 2.5f);
+        ImPlot::PlotLine("Function", xValues.data(), yValues.data(), 1024);
         ImPlot::PopStyleVar();
         ImPlot::PushStyleVar(ImPlotStyleVar_LineWeight, 2.5f);
         // ImPlot::PlotLine("Explicit Base", angles.data(), distancesExplicit.data(), angles.size());
@@ -52,9 +59,11 @@ void GUI::RayWindow(bool* p_open) {
     }
     if (ImPlot::BeginPlot("Coefficient plot",ImVec2(1024,256))) {
         ImPlot::SetupAxes("x","f(x)");
-        ImPlot::SetupAxis(ImAxis_X1, NULL, ImPlotAxisFlags_LogScale);
-        ImPlot::PushStyleVar(ImPlotStyleVar_LineWeight, 7.5f);
-        ImPlot::PlotLine("Implicit", coefficients.data(), coefficients.size());
+        ImPlot::SetupAxis(ImAxis_Y1, NULL, ImPlotAxisFlags_LogScale);
+        ImPlot::PushStyleVar(ImPlotStyleVar_LineWeight, 2.5f);
+        ImPlot::PlotLine("f", coefficients.data(), coefficients.size());
+        ImPlot::PlotLine("f'", coefficientsdx.data(), coefficientsdx.size());
+        ImPlot::PlotLine("f''", coefficientsd2x.data(), coefficientsd2x.size());
         ImPlot::PopStyleVar();
         ImPlot::PushStyleVar(ImPlotStyleVar_LineWeight, 2.5f);
         // ImPlot::PlotLine("Explicit Base", angles.data(), distancesExplicit.data(), angles.size());

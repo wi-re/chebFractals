@@ -42,6 +42,9 @@ inline int32_t screenWidth = 2048;
 inline int32_t screenHeight = 2048;
 
 inline float* scalarFieldData = nullptr;
+inline int32_t dataWidth = 32;
+inline int32_t dataHeight = 32;
+
 
 // used to create a gap from the domain to the edge of the window
 
@@ -60,7 +63,12 @@ struct Triangle {
 
 std::filesystem::path resolveFile(std::string fileName, std::vector<std::string> search_paths = {});
 #include <cheb/cheb.h>
+extern std::vector<std::tuple<cheb::complex, cheb::complex, cheb::complex>> trace;
 
 extern cheb::Function globalFunction;
+extern cheb::Function globalFunctionFirstDerivative;
+extern cheb::Function globalFunctionSecondDerivative;
 
 cheb::complex evalFunction(cheb::complex location);
+cheb::complex evalDerivative(cheb::complex location);
+cheb::complex evalSecondDerivative(cheb::complex location);

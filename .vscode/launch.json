@@ -11,7 +11,7 @@
             "program": "/home/winchenbach/dev/chebFractals/build/bin/gui",
             "args": [],
             "stopAtEntry": false,
-            "cwd": "${fileDirname}",
+            "cwd": "/home/winchenbach/dev/chebFractals/build/bin/",
             "environment": [],
             "externalConsole": false,
             "MIMode": "gdb",

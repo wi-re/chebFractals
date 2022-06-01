@@ -27,7 +27,9 @@
 #include <tools/timer.h>
 int main(int argc, char* argv[]) 
 {
-    globalFunction = cheb::Function([](cheb::scalar x){ return x * x * x;},cheb::Domain{-1.,1.});
+    globalFunction = cheb::Function([](cheb::scalar x){ return sin(x * 5.);},cheb::Domain{-1.,1.});
+    globalFunctionFirstDerivative = globalFunction.derivative();
+    globalFunctionSecondDerivative = globalFunctionFirstDerivative.derivative();
 
     auto& gui = GUI::instance();
     gui.render_lock.lock();

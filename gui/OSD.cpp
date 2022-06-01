@@ -106,10 +106,10 @@ auto [minDomain, maxDomain] = getDomain();
                 auto x = std::clamp(m_cursorPosition.x(), 0.0, (scalar)screenWidth) / (scalar)screenWidth;
                 auto y = 1. - std::clamp(m_cursorPosition.y(), 0.0, (scalar)screenHeight) / (scalar)screenHeight;
 
-                int32_t xi = std::clamp((int32_t)::floor(x * nx),0,nx-1);
-                int32_t yi = std::clamp((int32_t)::floor(y * ny),0,ny-1);
+                int32_t xi = std::clamp((int32_t)::floor(x * dataWidth),0,nx-1);
+                int32_t yi = std::clamp((int32_t)::floor(y * dataHeight),0,ny-1);
 
-                scalar value = scalarFieldData[xi + yi * nx];
+                scalar value = scalarFieldData[xi + yi * dataWidth];
                 addScalar("Scalar Field", value, "");
             }
 

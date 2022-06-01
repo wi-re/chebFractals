@@ -13,6 +13,7 @@
 #define WATCH(type, ns, id)\
   static type id = ParameterManager::instance().get<type>(std::string(#ns) +"." + #id);\
   if (ParameterManager::instance().get<type>(std::string(#ns) +"." + #id) != id) {\
+      std::cout << "Parameter " << std::string(#ns) << "." << std::string(#id) << " changed from " << id << " to " << ParameterManager::instance().get<type>(std::string(#ns) +"." + #id) << std::endl;\
       id = ParameterManager::instance().get<type>(std::string(#ns) +"." + #id);\
       dirty = true;\
   }
@@ -187,7 +188,7 @@ enum struct buffer_t {
     velocity, angularVelocity, acceleration, density, neighbors, UID, alpha, area, pressure1, pressure2, pressureBoundary, source, dpdt, rhoStar, predictedVelocity, pressureAcceleration, vorticity
 };
 enum struct renderMode_t {
-    real, imag, realGradient, imagGradient, fractal
+    real, imag, realGradient, imagGradient, fractal, abs, absGradient
 };
 
 
@@ -215,7 +216,13 @@ std::pair<float, float> updateField(float* data) {
     if(scalarFieldData == nullptr)
         scalarFieldData = (float*) malloc(sizeof(float) * nx * ny);
     if(dirty){
-        scalarFieldData = (float*) realloc(scalarFieldData, sizeof(float) * nx * ny);
+        int32_t ny = ParameterManager::instance().get<int32_t>("field.ny");
+        int32_t nx = ParameterManager::instance().get<int32_t>("field.nx");
+        auto total = sizeof(float) * nx * ny;
+        std::cout << "Allocating " << sizeof(float) << " x " << nx << " x " << ny << "B -> " << total << std::endl;
+        scalarFieldData = (float*) realloc(scalarFieldData, total);
+        dataWidth = nx;
+        dataHeight = ny;
     }
     }
     auto hScale = ParameterManager::instance().get<scalar>("field.h");
@@ -226,21 +233,43 @@ std::pair<float, float> updateField(float* data) {
     auto [domainMin, domainMax] = getDomain();
 
     #pragma omp parallel for
-    for (int32_t y = 0; y < nx; ++y) {
-        for (int32_t x = 0; x < ny; ++x) {
+    for (int32_t y = 0; y < ny; ++y) {
+        for (int32_t x = 0; x < nx; ++x) {
             scalar xPos = ((scalar) x) / ((scalar) nx - 1.) * (scalar) (domainMax.x() - domainMin.x()) + domainMin.x();
             scalar yPos = ((scalar) y) / ((scalar) ny - 1.) * (scalar) (domainMax.y() - domainMin.y()) + domainMin.y();
 
-            auto val = evalFunction(cheb::complex(xPos, yPos));
+if(mode != renderMode_t::fractal){
+            auto fx = evalFunction(cheb::complex(xPos, yPos));
+            auto dx = evalDerivative(cheb::complex(xPos, yPos));
+            //auto d2x = evalFunction(cheb::complex(xPos, yPos));
 
             auto value = 0.;
             switch(mode){
-case renderMode_t::real:value = val.real(); break;
-case renderMode_t::imag:value = val.imag(); break;
-case renderMode_t::realGradient:value = std::abs(val); break;
+case renderMode_t::real:value = fx.real(); break;
+case renderMode_t::imag:value = fx.imag(); break;
+case renderMode_t::abs: value = std::abs(fx); break;
+case renderMode_t::realGradient:value = dx.real(); break;
+case renderMode_t::imagGradient:value = dx.imag(); break;
+case renderMode_t::absGradient:value = std::abs(dx); break;
+// case renderMode_t::realGradient:value = std::abs(fx); break;
             }
 
             scalarFieldData[y * nx + x] = (float) value;
+}
+else{
+
+        cheb::complex pos = cheb::complex(xPos,yPos);
+        for(int32_t i = 0; i < 1024; ++i){
+            auto fx = evalFunction(pos);
+            auto dx = evalDerivative(pos);
+            pos -= fx / dx;
+            if(std::abs(fx/dx) < 1e-5)break;
+            // pos -= 0.1;
+        }
+        scalarFieldData[y * nx + x] = (float) std::abs(pos);
+}
+
+
         }
     }
 
@@ -421,7 +450,7 @@ if(ParameterManager::instance().get<std::string>("colorMap.colorMap") != colorMa
     for (int32_t it = 0; it < 1024; ++it)
         img[it] = v4{ (float)it / (float)1024 * 255.f,(float)it / (float)1024 * 255.f,(float)it / (float)1024 * 255.f, 255.f };
     // std::string file_name = std::string("cfg/") + colorMap + ".png";
-    
+    try{
     std::string file_name = resolveFile(std::string("cfg/") + ParameterManager::instance().get<std::string>("colorMap.colorMap") + ".png").string();
 
     if (std::filesystem::exists(file_name)) {
@@ -440,8 +469,8 @@ if(ParameterManager::instance().get<std::string>("colorMap.colorMap") != colorMa
         //img = QImage(QString::fromStdString(file_name));
         //img.load(QString(file_name.c_str()));
         //std::cout << image_width << " : " << image_height << std::endl;
-    }
-    //catch (...) {}
+    }}
+    catch (...) {}
     color_map = (v4*)realloc(color_map, sizeof(v4) * (image_width));
     for (int32_t it = 0; it < image_width; ++it) {
         color_map[it] = v4{ (float)(img[it].x) / 256.f, (float)(img[it].y) / 256.f,
@@ -514,6 +543,43 @@ void render() {
     //glOrtho(40, 60, 3, 13, 0, 1);
 
         renderField();
+        static  bool once = true;
+    bool dirty = once;
+    WATCH(double, path, x);
+    WATCH(double, path, y);
+    if(dirty){
+        trace.clear();
+
+        once = false;
+		auto x =	ParameterManager::instance().get<scalar>("path.x");
+		auto y =	ParameterManager::instance().get<scalar>("path.y");
+
+        cheb::complex pos = cheb::complex(x,y);
+        for(int32_t i = 0; i < 1024; ++i){
+            auto fx = evalFunction(pos);
+            auto dx = evalDerivative(pos);
+            trace.push_back(std::make_tuple(fx, dx, pos));
+            pos -= fx / dx;
+            if(std::abs(fx/dx) < 1e-5)break;
+            // pos -= 0.1;
+        }
+    }
+    auto [domainMin, domainMax] = getDomain();
+    glLoadIdentity();
+    glUseProgram(0);
+
+    glOrtho(domainMin.x(), domainMax.x(), domainMin.y(), domainMax.y(), 0, 1);
+    // glOrtho(domainMin.x(), domainMax.x(), domainMax.y(), domainMin.y(), 0, 1);
+    glBegin(GL_LINES);
+    for(int32_t i = 0; i < trace.size() - 1; ++i){
+        auto [fxl,dxl,pl] = trace[i];
+        auto [fxr,dxr,pr] = trace[i+1];
+        glVertex2f(pl.real(), pl.imag());
+        glVertex2f(pr.real(), pr.imag());
+    }
+
+    glEnd();
+
 
     glColor4f(0.8f, 0.f, 0.f, 1);
 }

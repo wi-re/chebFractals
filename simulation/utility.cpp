@@ -19,8 +19,10 @@ void initializeParameters(int32_t scene) {
     static auto vectorModes = std::vector<detail::iAny>{
             std::string("real"),
             std::string("imag"),
+            std::string("abs"),
             std::string("real gradient"),
             std::string("imag gradient"),
+            std::string("abs gradient"),
             std::string("newton") };
     static auto cMapPresets = std::vector<std::string>{ []() {std::vector <std::string> colorMaps; auto f = std::filesystem::path(ParameterManager::instance().get<std::string>("stylePath")); auto p = f.parent_path().string(); if (*(p.end() - 1) == '/' || *(p.end() - 1) == '\\')p = p.substr(0, p.length() - 1); std::replace(p.begin(), p.end(), '\\', '/'); for (auto& p : std::filesystem::directory_iterator(p))if (p.path().extension().string().find(".png") != std::string::npos)colorMaps.push_back(p.path().filename().replace_extension("").string()); return colorMaps; }() };
     static auto colorMaps = std::vector<detail::iAny>{};
@@ -32,10 +34,14 @@ void initializeParameters(int32_t scene) {
     //         std::string("hot"),
     //         std::string("RdBu") };
 
-    ParameterManager::instance().newParameter("colorMap.renderMode", std::string("magnitude"), { .constant = false, .presets =vectorModes
+    ParameterManager::instance().newParameter("colorMap.renderMode", std::string("real"), { .constant = false, .presets =vectorModes
         });
     ParameterManager::instance().newParameter("colorMap.colorMap", std::string("viridis"), { .constant = false, .presets = colorMaps
         });
+
+    ParameterManager::instance().newParameter("path.x", 0., { .constant = false ,.range = Range{-1.,1.}});
+    ParameterManager::instance().newParameter("path.y", 0., { .constant = false ,.range = Range{-1.,1.}});
+    ParameterManager::instance().newParameter("path.display", true, { .constant = false });
 
     ParameterManager::instance().newParameter("domain.xmin", -1., { .constant = false ,.range = Range{-10.,10.}});
     ParameterManager::instance().newParameter("domain.xmax", 1., { .constant = false ,.range = Range{-10.,10.}});
