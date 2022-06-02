@@ -329,7 +329,7 @@ if(mode != renderMode_t::fractal){
             switch(mode){
 case renderMode_t::real:value = fx.real(); break;
 case renderMode_t::imag:value = fx.imag(); break;
-case renderMode_t::abs: value = std::abs(fx); break;
+case renderMode_t::abs: value = std::abs(fx * fx); break;
 case renderMode_t::realGradient:value = dx.real(); break;
 case renderMode_t::imagGradient:value = dx.imag(); break;
 case renderMode_t::absGradient:value = std::abs(dx); break;
@@ -742,10 +742,14 @@ auto getStep = [method, learningRate](cheb::complex location, cheb::complex prio
         auto d2x = evalSecondDerivative(location);
         // newton
 
-        d2x = 2. * (fx * d2x + dx * dx);
-        dx = 2. * fx * dx;
-        fx = fx * fx; //fx.real() * fx.real() + fx.imag() * fx.imag();
-        if(usePrior){
+        //d2x = 2. * (fx * d2x + dx * dx);
+        //dx = 2. * fx * dx;
+        //dx = cheb::complex(evalFunction(location.real()).real(), evalFunction(location.imag()).real());
+
+        //dx = 2. * dx * (fx.real() *)
+        //fx = fx.real() * fx.real() + fx.imag() * fx.imag();
+
+        if(false){
             auto dxPrior = evalDerivative(prior);
             auto fxPrior = evalFunction(prior);
             dxPrior = 2. * fxPrior * dxPrior;
