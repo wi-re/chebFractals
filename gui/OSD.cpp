@@ -69,7 +69,7 @@ auto [minDomain, maxDomain] = getDomain();
                 float vcp = value;
                 auto col = ImGui::GetStyle().Colors[ImGuiCol_FrameBg];
                 ImGui::GetStyle().Colors[ImGuiCol_FrameBg] = ImVec4(0.8f, 0.8f, 0.8f, 1.0f);
-                ImGui::DragFloat(name, &vcp, 0, vcp, vcp,"%.6f");
+                ImGui::DragFloat(name, &vcp, 0, vcp, vcp,"%g");
                 ImGui::GetStyle().Colors[ImGuiCol_FrameBg] = col;
                 if(ImGui::IsItemHovered())
                     ImGui::SetTooltip("%s",description);
@@ -80,7 +80,7 @@ auto [minDomain, maxDomain] = getDomain();
                 float2 vcp(value.x(), value.y());
                 auto col = ImGui::GetStyle().Colors[ImGuiCol_FrameBg];
                 ImGui::GetStyle().Colors[ImGuiCol_FrameBg] = ImVec4(0.8f, 0.8f, 0.8f, 1.0f);
-                ImGui::DragFloat2(name, &vcp.x, 0, 0, 0, "%.6f");
+                ImGui::DragFloat2(name, &vcp.x, 0, 0, 0, "%g");
                 ImGui::GetStyle().Colors[ImGuiCol_FrameBg] = col;
                 if (ImGui::IsItemHovered())
                     ImGui::SetTooltip("%s",description);
@@ -109,6 +109,8 @@ auto [minDomain, maxDomain] = getDomain();
                 int32_t xi = std::clamp((int32_t)::floor(x * dataWidth),0,nx-1);
                 int32_t yi = std::clamp((int32_t)::floor(y * dataHeight),0,ny-1);
 
+            addScalar2("Cursor (screen)", vec(x,y), "");
+            addScalar2("Cursor (int)", vec(xi,yi), "");
                 scalar value = scalarFieldData[xi + yi * dataWidth];
                 addScalar("Scalar Field", value, "");
             }

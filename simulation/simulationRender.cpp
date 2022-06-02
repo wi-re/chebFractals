@@ -191,6 +191,10 @@ enum struct renderMode_t {
     real, imag, realGradient, imagGradient, fractal, abs, absGradient
 };
 
+#include <mutex>
+enum struct optimizationMethod{
+    newton, halley, gradientDescent
+};
 
 std::pair<float, float> updateField(float* data) {
     //static std::random_device rd;
@@ -201,8 +205,74 @@ std::pair<float, float> updateField(float* data) {
     //    data[i] = distribution(generator);
     //}
 
-    auto modestr = ParameterManager::instance().get<std::string>("colorMap.renderMode");
+auto learningRate = std::pow(10., ParameterManager::instance().get<scalar>("field.learningRate"));
+auto stringMethod = ParameterManager::instance().get<std::string>("field.method");
+optimizationMethod method = optimizationMethod::newton;
+if(stringMethod == "newton")
+    method = optimizationMethod::newton;
+if(stringMethod == "halley")
+    method = optimizationMethod::halley;
+if(stringMethod == "gradientDescent")
+    method = optimizationMethod::gradientDescent;
 
+
+auto getStep = [method, learningRate](cheb::complex location, cheb::complex prior, bool usePrior){
+    switch(method){
+        case optimizationMethod::gradientDescent:{
+        auto fx = evalFunction(location);
+        auto dx = evalDerivative(location);
+        auto d2x = evalSecondDerivative(location);
+        // newton
+
+        d2x = 2. * (fx * d2x + dx * dx);
+        dx = 2. * fx * dx;
+        fx = fx * fx; //fx.real() * fx.real() + fx.imag() * fx.imag();
+        if(usePrior){
+            auto dxPrior = evalDerivative(prior);
+            auto fxPrior = evalFunction(prior);
+            dxPrior = 2. * fxPrior * dxPrior;
+            auto posTerm = (location - prior);
+            posTerm= cheb::complex(posTerm.real(), -posTerm.imag());
+            auto learningRate = std::abs( posTerm * (dx - dxPrior)) / ((dx - dxPrior) * (dx - dxPrior));
+            return -dx * learningRate;
+        }
+        else
+            return -dx * learningRate;
+        }
+        case optimizationMethod::newton:{            
+        auto fx = evalFunction(location);
+        auto dx = evalDerivative(location);
+        dx = 2. * fx * dx;
+        fx = fx * fx; //fx.real() * fx.real() + fx.imag() * fx.imag();
+        return - fx/ dx;
+        }
+        case optimizationMethod::halley:{        
+            auto fx = evalFunction(location);
+            auto dx = evalDerivative(location);
+            auto d2x = evalSecondDerivative(location);
+            auto step = (2. * fx * dx) / (2. * dx * dx - fx *d2x);
+            return - step;
+        }
+    }
+};
+    static scalar prevClusterEps = ParameterManager::instance().get<scalar>("field.clusterEpsilon");
+    static auto& curClusterEps = ParameterManager::instance().get<scalar>("field.clusterEpsilon");
+    scalar clusterEpsilon = std::pow(10., curClusterEps);
+    static std::vector<cheb::complex> clusterCenters;
+    if(prevClusterEps!=curClusterEps){
+        clusterCenters.clear();
+        prevClusterEps = curClusterEps;
+    }
+    static scalar prevThreshold = ParameterManager::instance().get<scalar>("field.threshold");
+    static auto& curThreshold = ParameterManager::instance().get<scalar>("field.threshold");
+    scalar clusterThreshold = std::pow(10., curThreshold);
+    if(prevThreshold!=curThreshold){
+        prevThreshold = curThreshold;
+    }
+
+    auto modestr = ParameterManager::instance().get<std::string>("colorMap.renderMode");
+    static cheb::complex* vectorFieldData;
+    static int32_t* iterationFieldData;
     renderMode_t mode = renderMode_t::real;
     if (modestr == "real") mode = renderMode_t::real;
     if (modestr == "imag") mode = renderMode_t::imag;
@@ -215,12 +285,21 @@ std::pair<float, float> updateField(float* data) {
     WATCH(int32_t, field, ny);
     if(scalarFieldData == nullptr)
         scalarFieldData = (float*) malloc(sizeof(float) * nx * ny);
+    if(iterationFieldData == nullptr)
+        iterationFieldData = (int32_t*) malloc(sizeof(int32_t) * nx * ny);
+    if(vectorFieldData == nullptr)
+        vectorFieldData = (cheb::complex*) malloc(sizeof(vec) * nx * ny);
+
+        dataWidth = nx;
+        dataHeight = ny;
     if(dirty){
         int32_t ny = ParameterManager::instance().get<int32_t>("field.ny");
         int32_t nx = ParameterManager::instance().get<int32_t>("field.nx");
         auto total = sizeof(float) * nx * ny;
         std::cout << "Allocating " << sizeof(float) << " x " << nx << " x " << ny << "B -> " << total << std::endl;
         scalarFieldData = (float*) realloc(scalarFieldData, total);
+        iterationFieldData = (int32_t*) realloc(scalarFieldData, total);
+        vectorFieldData = (cheb::complex*) realloc(vectorFieldData, total * 4);
         dataWidth = nx;
         dataHeight = ny;
     }
@@ -229,6 +308,7 @@ std::pair<float, float> updateField(float* data) {
     auto ny = ParameterManager::instance().get<int32_t>("field.ny");
     auto nx = ParameterManager::instance().get<int32_t>("field.nx");
     auto hi = (int32_t)::ceil(hScale);
+    bool clustering = ParameterManager::instance().get<bool>("field.clustering");
 
     auto [domainMin, domainMax] = getDomain();
 
@@ -237,6 +317,8 @@ std::pair<float, float> updateField(float* data) {
         for (int32_t x = 0; x < nx; ++x) {
             scalar xPos = ((scalar) x) / ((scalar) nx - 1.) * (scalar) (domainMax.x() - domainMin.x()) + domainMin.x();
             scalar yPos = ((scalar) y) / ((scalar) ny - 1.) * (scalar) (domainMax.y() - domainMin.y()) + domainMin.y();
+
+
 
 if(mode != renderMode_t::fractal){
             auto fx = evalFunction(cheb::complex(xPos, yPos));
@@ -258,29 +340,98 @@ case renderMode_t::absGradient:value = std::abs(dx); break;
 }
 else{
 
+int32_t i = 0;
         cheb::complex pos = cheb::complex(xPos,yPos);
-        for(int32_t i = 0; i < 1024; ++i){
-            auto fx = evalFunction(pos);
-            auto dx = evalDerivative(pos);
-            pos -= fx / dx;
-            if(std::abs(fx/dx) < 1e-5)break;
-            // pos -= 0.1;
+        cheb::complex prior = pos;
+        // newton
+        for(; i < 128; ++i){
+            auto step = getStep(pos, prior, i > 0);
+            prior = pos;
+            pos += step;
+            if(std::abs(step) < 1e-5)break;
         }
-
         auto cx = std::clamp(pos.real(), -1., 1.);
         auto cy = std::clamp(pos.imag(), -1., 1.);
 
-        scalarFieldData[y * nx + x] = (float)std::sqrt(cx * cx + cy * cy);
-        //scalarFieldData[y * nx + x] = (float) std::abs(pos);
-        //scalarFieldData[y * nx + x] = (float)std::abs(evalFunction(pos));
+        auto val = (float)std::sqrt(cx * cx + cy * cy);
+
+        scalarFieldData[y * nx + x] = val;
+        vectorFieldData[y * nx + x] = pos;
+        iterationFieldData[y * nx + x] = i;
+        // scalarFieldData[y * nx + x] = (float)std::abs(evalFunction(pos));
+        if(clustering)
+            scalarFieldData[y * nx + x] = std::abs(-evalFunction(pos) / evalDerivative(pos));
 }
-
-
         }
     }
 
     auto min = *std::min_element(scalarFieldData, scalarFieldData + nx * ny);
     auto max = *std::max_element(scalarFieldData, scalarFieldData + nx * ny);
+if(mode == renderMode_t::fractal && clustering){
+    min = FLT_MAX;
+    max = -FLT_MAX;
+    scalar clusterEpsilon = 1e-2;
+    std::mutex clusterGuard;
+    bool updateClusters = false;
+    //std::vector<std::pair<cheb::complex, std::vector<cheb::complex>>> clusters;
+    #pragma omp parallel for
+    for (int32_t y = 0; y < ny; ++y) {
+        for (int32_t x = 0; x < nx; ++x) {
+            auto cur = vectorFieldData[y * nx + x];
+            auto val = std::abs(getStep(cur, cur, false));
+            if(val > clusterThreshold || val != val){
+                scalarFieldData[y * nx + x] = -1.;
+                continue;
+            }
+            int32_t found = -1;
+            for(int32_t c = 0; c < clusterCenters.size(); ++ c){
+                auto pos = clusterCenters[c];
+                if(std::abs(pos - cur) < clusterEpsilon){
+                    found = c;
+                    break;
+                }
+            }
+            if(found == -1){
+                updateClusters = true;
+            }
+            else{
+                scalarFieldData[y * nx + x] = (scalar) found;
+                min = std::min(min, (float) found);
+                max = std::max(max, (float) found);
+            }
+        }
+    }
+    if(updateClusters){        
+        std::cout << "Found new Clusters, updating Cluster mapping" << std::endl;
+        for (int32_t y = 0; y < ny; ++y) {
+            for (int32_t x = 0; x < nx; ++x) {
+                auto cur = vectorFieldData[y * nx + x];
+                auto val = std::abs(getStep(cur,cur, false));
+                if(val > clusterThreshold || val != val){
+                    scalarFieldData[y * nx + x] = -1.;
+                    continue;
+                }
+                int32_t found = -1;
+                for(int32_t c = 0; c < clusterCenters.size(); ++ c){
+                    auto pos = clusterCenters[c];
+                    if(std::abs(pos - cur) < clusterEpsilon){
+                        found = c;
+                        break;
+                    }
+                }
+                if(found == -1){
+                    clusterCenters.push_back(cur);
+                    found = clusterCenters.size() - 1;
+                }
+                scalarFieldData[y * nx + x] = (scalar) found;
+                // scalarFieldData[y * nx + x] = 1;
+                min = std::min(min, (float) found);
+                max = std::max(max, (float) found);
+            }
+        }
+    }
+}
+
 #pragma omp parallel for
     for (int32_t y = 0; y < screenHeight; ++y) {
         for (int32_t x = 0; x < screenWidth; ++x) {
@@ -291,6 +442,10 @@ else{
             v = (v - min) / (max - min);
             v = std::clamp(v, 0.f, 1.f);
             data[y * screenWidth + x] = v;
+            if(mode == renderMode_t::fractal && scalarFieldData[yi * nx + xi] < -0.5)
+                data[y * screenWidth + x] = -1.;
+            if(scalarFieldData[yi * nx + xi] != scalarFieldData[yi * nx + xi])
+                data[y * screenWidth + x] = -1.;
         }
     }
     return std::make_pair(min, max);
@@ -333,11 +488,13 @@ uniform float max = 1.0;
 void main(){
 float v = texture( renderedTexture, UV ).r;
 float rel = v;//(v - min) / (max - min);
-float clamped = clamp(rel, 0.0, 1.0);
-vec3 col = texture(colorRamp, clamped).xyz;
-color = col;
-	//color =  vec3(v,v,v);
-	//color =  vec3(UV.xy,1.0);
+if(rel < -0.5){
+    color = vec3(1,0,0);
+    }else{
+        float clamped = clamp(rel, 0.0, 1.0);
+        vec3 col = texture(colorRamp, clamped).xyz;
+        color = col;
+    }
 })";
     GLuint quad_VertexArrayID;
     glGenVertexArrays(1, &quad_VertexArrayID);
@@ -360,7 +517,7 @@ color = col;
     glBindTexture(GL_TEXTURE_2D, textureID);
 
     // Give the image to OpenGL
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, screenWidth, screenHeight, 0, GL_RED, GL_FLOAT, data);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, screenWidth, screenHeight, 0, GL_RED, GL_FLOAT, data);
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -502,6 +659,9 @@ if(ParameterManager::instance().get<std::string>("colorMap.colorMap") != colorMa
   WATCH(scalar, domain, xmax);
   WATCH(scalar, domain, ymin);
   WATCH(scalar, domain, ymax);
+    WATCH(std::string, field, method);
+    WATCH(scalar, field, learningRate);
+    WATCH(bool, field, clustering);
 
     if (dirty) {
         auto [min,max] = updateField(data);
@@ -553,6 +713,8 @@ void render() {
     bool dirty = once;
     WATCH(double, path, x);
     WATCH(double, path, y);
+    WATCH(std::string, field, method);
+    WATCH(scalar, field, learningRate);
     if(dirty){
         trace.clear();
 
@@ -560,15 +722,74 @@ void render() {
 		auto x =	ParameterManager::instance().get<scalar>("path.x");
 		auto y =	ParameterManager::instance().get<scalar>("path.y");
 
+auto learningRate = std::pow(10., ParameterManager::instance().get<scalar>("field.learningRate"));
+auto stringMethod = ParameterManager::instance().get<std::string>("field.method");
+optimizationMethod method = optimizationMethod::newton;
+if(stringMethod == "newton")
+    method = optimizationMethod::newton;
+if(stringMethod == "halley")
+    method = optimizationMethod::halley;
+if(stringMethod == "gradientDescent")
+    method = optimizationMethod::gradientDescent;
+
+
+
+auto getStep = [method, learningRate](cheb::complex location, cheb::complex prior, bool usePrior){
+    switch(method){
+        case optimizationMethod::gradientDescent: case optimizationMethod::newton:{
+        auto fx = evalFunction(location);
+        auto dx = evalDerivative(location);
+        auto d2x = evalSecondDerivative(location);
+        // newton
+
+        d2x = 2. * (fx * d2x + dx * dx);
+        dx = 2. * fx * dx;
+        fx = fx * fx; //fx.real() * fx.real() + fx.imag() * fx.imag();
+        if(usePrior){
+            auto dxPrior = evalDerivative(prior);
+            auto fxPrior = evalFunction(prior);
+            dxPrior = 2. * fxPrior * dxPrior;
+            auto learningRate = std::abs((location - prior) * (dx - dxPrior)) / ((dx - dxPrior) * (dx - dxPrior));
+            return -dx * learningRate;
+        }
+        else
+            return -dx * learningRate;
+        }
+        // case optimizationMethod::newton:{            
+        // auto fx = evalFunction(location);
+        // auto dx = evalDerivative(location);
+        // return - fx/ dx;
+        // }
+        case optimizationMethod::halley:{        
+            auto fx = evalFunction(location);
+            auto dx = evalDerivative(location);
+            auto d2x = evalSecondDerivative(location);
+            auto step = (2. * fx * dx) / (2. * dx * dx - fx *d2x);
+            return - step;
+        }
+    }
+};
         cheb::complex pos = cheb::complex(x,y);
-        for(int32_t i = 0; i < 1024; ++i){
+        std::cout << "Starting path tracing at " << pos.real() << " + " << pos.imag() << "i\n";
+        cheb::complex prior = pos;
+        for(int32_t i = 0; i < 128; ++i){
             auto fx = evalFunction(pos);
             auto dx = evalDerivative(pos);
             trace.push_back(std::make_tuple(fx, dx, pos));
-            pos -= fx / dx;
-            if(std::abs(fx/dx) < 1e-5)break;
+            auto step = getStep(pos, prior, i > 0);
+            prior = pos;
+            std::cout << "\t " << i << "\t:" << pos.real() << " + " << pos.imag() << "i @ " << 
+                    fx.real() << " + " << fx.imag() << "i / " << 
+                    dx.real() << " + " << dx.imag() << "i -> " <<
+                    step.real() << " + " << step.imag() << "i\n";
+            pos += step;
+            if(std::abs(step) < 1e-5){
+                std::cout << "\tUpdate below threshold ( " << std::abs(fx/dx) << " ); stopping early.\n";
+                break;
+            }
             // pos -= 0.1;
         }
+        std::cout << "Final path position : " << pos.real() << " + " << pos.imag() << std::endl;
     }
     auto [domainMin, domainMax] = getDomain();
     glLoadIdentity();

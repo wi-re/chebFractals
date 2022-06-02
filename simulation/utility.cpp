@@ -43,7 +43,7 @@ void initializeParameters(int32_t scene) {
         return Range{ min, max };
     };
 
-    ParameterManager::instance().newParameter("path.x", 0., { .constant = false ,.range = genRange(-1.f,1.f)});
+    ParameterManager::instance().newParameter("path.x", 0., { .constant = false ,.range = genRange(-1.,1.)});
     ParameterManager::instance().newParameter("path.y", 0., { .constant = false ,.range = genRange(-1.,1.)});
     ParameterManager::instance().newParameter("path.display", true, { .constant = false });
 
@@ -58,10 +58,20 @@ void initializeParameters(int32_t scene) {
     ParameterManager::instance().newParameter("field.h", 1.0, { .constant = false, .range = genRange(0.01,10.0) });
     ParameterManager::instance().newParameter("field.min", 0.0, { .constant = false , .range = genRange(-10.0,10.0) });
     ParameterManager::instance().newParameter("field.max", 1.0, { .constant = false, .range = genRange(-10.0,10.0) });
+    ParameterManager::instance().newParameter("field.learningRate", -4.0, { .constant = false, .range = genRange(-8.0,8.0) });
     
     ParameterManager::instance().newParameter("colorMap.min", scalar(0.99), { .constant = false , .range = genRange(-10.0,10.0) });
     ParameterManager::instance().newParameter("colorMap.max", scalar(1.03), { .constant = false , .range = genRange(-10.0,10.0) });
     ParameterManager::instance().newParameter("colorMap.auto", true, { .constant = false });
+    ParameterManager::instance().newParameter("field.clusterEpsilon", -2., { .constant = false,.range = genRange(-10.,1.) });
+ ParameterManager::instance().newParameter("field.threshold", -2., { .constant = false,.range = genRange(-10.,1.) });
+ParameterManager::instance().newParameter("field.clustering", false, { .constant = false });
+    static auto methods = std::vector<detail::iAny>{
+            std::string("newton"),
+            std::string("halley"),
+            std::string("gradientDescent") };
+ ParameterManager::instance().newParameter("field.method", std::string("newton"), 
+ { .constant = false,.presets = methods });
 
 }
 

@@ -129,7 +129,7 @@ std::filesystem::path resolveFile(std::string fileName, std::vector<std::string>
 		}
 		if ((ak.size() - 1) % 2 == 1) {
             auto temp = bk1;
-            bk1 = ak[0] + x * bk1 - bk2;
+            bk1 = ak[1] + x * bk1 - bk2;
             bk2 = temp;
 		}
 		cheb::complex res = 0.0;

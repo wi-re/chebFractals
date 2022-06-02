@@ -275,7 +275,7 @@ void ParameterManager::parseTree(YAML::Node root) {
 		std::vector<ty>& vec = boost::any_cast<std::vector<ty>&>(parameter.param.valVec.value());\
 		if (parameter.properties.hidden) return;\
 		ImGui::PushID(parameter.identifier.c_str());\
-		ImGui::Text(parameter.identifier.c_str());\
+		ImGui::Text("%s", parameter.identifier.c_str());\
 		if (!parameter.properties.constant) {\
 			ImGui::SameLine();\
 			if (ImGui::Button("+"))\
@@ -363,14 +363,14 @@ ParameterManager::ParameterManager() {
 			ImGui::SliderInt(param.identifier.c_str(), &ib, 0, 1);
 			ImGui::GetStyle().Colors[ImGuiCol_FrameBg] = col;
 			if (param.properties.description != "" && ImGui::IsItemHovered())
-				ImGui::SetTooltip(param.properties.description.c_str());
+				ImGui::SetTooltip("%s", param.properties.description.c_str());
 			return;
 		}
 		int32_t ib = var ? 1 : 0;
 		int32_t ibb = ib;
 		ImGui::SliderInt(param.identifier.c_str(), &ib, 0, 1);
 		if (param.properties.description != "" && ImGui::IsItemHovered())
-			ImGui::SetTooltip(param.properties.description.c_str());
+			ImGui::SetTooltip("%s", param.properties.description.c_str());
 		if (ib != ibb)
 			var = ib == 0 ? false : true;
 		return;
@@ -383,20 +383,28 @@ ParameterManager::ParameterManager() {
 			auto col = ImGui::GetStyle().Colors[ImGuiCol_FrameBg];
 			ImGui::GetStyle().Colors[ImGuiCol_FrameBg] = ImVec4(0.8f, 0.8f, 0.8f, 1.0f);
 			static char buf1[256] = "";
+			#ifdef WIN32
 			strcpy_s(buf1, 256, var.c_str());
+			#else
+			strcpy(buf1,var.c_str());
+			#endif
 			ImGui::InputText(param.identifier.c_str(), buf1, 64);
 			ImGui::GetStyle().Colors[ImGuiCol_FrameBg] = col;
 			if (param.properties.description != "" && ImGui::IsItemHovered())
-				ImGui::SetTooltip(param.properties.description.c_str());
+				ImGui::SetTooltip("%s", param.properties.description.c_str());
 			return;
 		}
 		static char buf1[256] = "";
-		strcpy_s(buf1, 256, var.c_str());
+			#ifdef WIN32
+			strcpy_s(buf1, 256, var.c_str());
+			#else
+			strcpy(buf1,var.c_str());
+			#endif
 		ImGui::InputText(param.identifier.c_str(), buf1, 64);
 		var = buf1;
 
 		if (param.properties.description != "" && ImGui::IsItemHovered())
-			ImGui::SetTooltip(param.properties.description.c_str());
+			ImGui::SetTooltip("%s", param.properties.description.c_str());
 		if (param.properties.presets.size() != 0) {
 			std::vector<std::string> presets;
 			for (auto& pr : param.properties.presets)
@@ -421,11 +429,15 @@ ParameterManager::ParameterManager() {
 		auto col = ImGui::GetStyle().Colors[ImGuiCol_FrameBg];
 		ImGui::GetStyle().Colors[ImGuiCol_FrameBg] = ImVec4(0.8f, 0.8f, 0.8f, 1.0f);
 		static char buf1[256] = "";
-		strcpy_s(buf1, 256, var);
+			#ifdef WIN32
+			strcpy_s(buf1, 256, var);
+			#else
+			strcpy(buf1,var);
+			#endif
 		ImGui::InputText(param.identifier.c_str(), buf1, 64);
 		ImGui::GetStyle().Colors[ImGuiCol_FrameBg] = col;
 		if (param.properties.description != "" && ImGui::IsItemHovered())
-			ImGui::SetTooltip(param.properties.description.c_str());
+			ImGui::SetTooltip("%s", param.properties.description.c_str());
 		return;
 		});
 	addUifunction(typeid(int32_t), [](Parameter& param) {
@@ -438,14 +450,14 @@ ParameterManager::ParameterManager() {
 			ImGui::DragInt(param.identifier.c_str(), &vcp, 0, vcp, vcp);
 			ImGui::GetStyle().Colors[ImGuiCol_FrameBg] = col;
 			if (param.properties.description != "" && ImGui::IsItemHovered())
-				ImGui::SetTooltip(param.properties.description.c_str());
+				ImGui::SetTooltip("%s", param.properties.description.c_str());
 			return;
 		}
 		if (param.properties.range)
 			ImGui::SliderInt(param.identifier.c_str(), &var, param.properties.range.value().min, param.properties.range.value().max);
 		else ImGui::DragInt(param.identifier.c_str(), &var);
 		if (param.properties.description != "" && ImGui::IsItemHovered())
-			ImGui::SetTooltip(param.properties.description.c_str());
+			ImGui::SetTooltip("%s", param.properties.description.c_str());
 		if (param.properties.presets.size() != 0) {
 			std::vector<int32_t> presets;
 			for (auto& pr : param.properties.presets)
@@ -476,14 +488,14 @@ ParameterManager::ParameterManager() {
 			ImGui::GetStyle().Colors[ImGuiCol_FrameBg] = col;
 			//ImGui::Text((param.identifier + ": " + std::to_string(var)).c_str());
 			if (param.properties.description != "" && ImGui::IsItemHovered())
-				ImGui::SetTooltip(param.properties.description.c_str());
+				ImGui::SetTooltip("%s", param.properties.description.c_str());
 			return;
 		}
 		if (param.properties.range)
 			ImGui::SliderInt(param.identifier.c_str(), &vari, (int32_t)(uint32_t)param.properties.range.value().min, (int32_t)(uint32_t)param.properties.range.value().max);
 		else ImGui::DragInt(param.identifier.c_str(), &vari, 1, 0, INT_MAX);
 		if (param.properties.description != "" && ImGui::IsItemHovered())
-			ImGui::SetTooltip(param.properties.description.c_str());
+			ImGui::SetTooltip("%s", param.properties.description.c_str());
 		if (varii != vari) var = (uint32_t)vari;
 		if (param.properties.presets.size() != 0) {
 			std::vector<uint32_t> presets;
@@ -515,14 +527,14 @@ ParameterManager::ParameterManager() {
 			ImGui::GetStyle().Colors[ImGuiCol_FrameBg] = col;
 			//ImGui::Text((param.identifier + ": " + std::to_string(var)).c_str());
 			if (param.properties.description != "" && ImGui::IsItemHovered())
-				ImGui::SetTooltip(param.properties.description.c_str());
+				ImGui::SetTooltip("%s", param.properties.description.c_str());
 			return;
 		}
 		if (param.properties.range)
 			ImGui::SliderInt(param.identifier.c_str(), &vari, (int32_t)(std::size_t)param.properties.range.value().min, (int32_t)(std::size_t)param.properties.range.value().max);
 		else ImGui::DragInt(param.identifier.c_str(), &vari, 1, 0, INT_MAX);
 		if (param.properties.description != "" && ImGui::IsItemHovered())
-			ImGui::SetTooltip(param.properties.description.c_str());
+			ImGui::SetTooltip("%s", param.properties.description.c_str());
 		if (varii != vari) var = (std::size_t)vari;
 		if (param.properties.presets.size() != 0) {
 			std::vector<std::size_t> presets;
@@ -551,14 +563,14 @@ ParameterManager::ParameterManager() {
 			ImGui::DragFloat(param.identifier.c_str(), &vcp, 0, vcp, vcp, "%.6f");
 			ImGui::GetStyle().Colors[ImGuiCol_FrameBg] = col;
 			if (param.properties.description != "" && ImGui::IsItemHovered())
-				ImGui::SetTooltip(param.properties.description.c_str());
+				ImGui::SetTooltip("%s", param.properties.description.c_str());
 			return;
 		}
 		if (param.properties.range)
 			ImGui::SliderFloat(param.identifier.c_str(), &var, param.properties.range.value().min, param.properties.range.value().max, "%.5g");
 		else ImGui::DragFloat(param.identifier.c_str(), &var, var * 0.01f, -FLT_MAX, FLT_MAX, "%.6f");
 		if (param.properties.description != "" && ImGui::IsItemHovered())
-			ImGui::SetTooltip(param.properties.description.c_str());
+			ImGui::SetTooltip("%s", param.properties.description.c_str());
 		if (param.properties.presets.size() != 0) {
 			std::vector<float> presets;
 			for (auto& pr : param.properties.presets)
@@ -588,14 +600,14 @@ ParameterManager::ParameterManager() {
 			ImGui::DragFloat(param.identifier.c_str(), &vcp, 0, vcp, vcp, "%.6f");
 			ImGui::GetStyle().Colors[ImGuiCol_FrameBg] = col;
 			if (param.properties.description != "" && ImGui::IsItemHovered())
-				ImGui::SetTooltip(param.properties.description.c_str());
+				ImGui::SetTooltip("%s", param.properties.description.c_str());
 			return;
 		}
 		if (param.properties.range)
 			ImGui::SliderFloat(param.identifier.c_str(), &vard, (float)(double)param.properties.range.value().min, (float)(double)param.properties.range.value().max);
 		else ImGui::DragFloat(param.identifier.c_str(), &vard, 0, 0.f, 0.f, "%.6f");
 		if (param.properties.description != "" && ImGui::IsItemHovered())
-			ImGui::SetTooltip(param.properties.description.c_str());
+			ImGui::SetTooltip("%s", param.properties.description.c_str());
 		if (vard != vardd)
 			var = vard;
 		if (param.properties.presets.size() != 0) {
@@ -626,14 +638,14 @@ ParameterManager::ParameterManager() {
 			ImGui::DragFloat4(param.identifier.c_str(), &vcp.x(), 0, 0, 0);
 			ImGui::GetStyle().Colors[ImGuiCol_FrameBg] = col;
 			if (param.properties.description != "" && ImGui::IsItemHovered())
-				ImGui::SetTooltip(param.properties.description.c_str());
+				ImGui::SetTooltip("%s", param.properties.description.c_str());
 			return;
 		}
 		if (param.properties.range)
 			ImGui::SliderFloat4(param.identifier.c_str(), &var.x(), param.properties.range.value().min, param.properties.range.value().max);
 		else ImGui::DragFloat4(param.identifier.c_str(), &var.x(), 0.01f);
 		if (param.properties.description != "" && ImGui::IsItemHovered())
-			ImGui::SetTooltip(param.properties.description.c_str());
+			ImGui::SetTooltip("%s", param.properties.description.c_str());
 		if (param.properties.presets.size() != 0) {
 			std::vector<float4> presets;
 			for (auto& pr : param.properties.presets)
@@ -663,14 +675,14 @@ ParameterManager::ParameterManager() {
 			ImGui::DragFloat4(param.identifier.c_str(), &vcp.x(), 0, 0, 0);
 			ImGui::GetStyle().Colors[ImGuiCol_FrameBg] = col;
 			if (param.properties.description != "" && ImGui::IsItemHovered())
-				ImGui::SetTooltip(param.properties.description.c_str());
+				ImGui::SetTooltip("%s", param.properties.description.c_str());
 			return;
 		}
 		if (param.properties.range)
 			ImGui::SliderFloat4(param.identifier.c_str(), &var.x(), (float)(double)param.properties.range.value().min, (float)(double)param.properties.range.value().max);
 		else ImGui::DragFloat4(param.identifier.c_str(), &var.x(), 0.01f);
 		if (param.properties.description != "" && ImGui::IsItemHovered())
-			ImGui::SetTooltip(param.properties.description.c_str());
+			ImGui::SetTooltip("%s", param.properties.description.c_str());
 		if (varb.x() != var.x() || varb.y() != var.y() || varb.z() != var.z() || varb.w() != var.w()) vard = double4{ (double)var.x(), (double)var.y(),(double)var.z(), (double)var.w() };
 		if (param.properties.presets.size() != 0) {
 			std::vector<double4> presets;
@@ -700,14 +712,14 @@ ParameterManager::ParameterManager() {
 			ImGui::DragInt4(param.identifier.c_str(), &vcp.x(), 0, 0, 0);
 			ImGui::GetStyle().Colors[ImGuiCol_FrameBg] = col;
 			if (param.properties.description != "" && ImGui::IsItemHovered())
-				ImGui::SetTooltip(param.properties.description.c_str());
+				ImGui::SetTooltip("%s", param.properties.description.c_str());
 			return;
 		}
 		if (param.properties.range)
 			ImGui::SliderInt4(param.identifier.c_str(), &var.x(), param.properties.range.value().min, param.properties.range.value().max);
 		else ImGui::DragInt4(param.identifier.c_str(), &var.x(), 1.f);
 		if (param.properties.description != "" && ImGui::IsItemHovered())
-			ImGui::SetTooltip(param.properties.description.c_str());
+			ImGui::SetTooltip("%s", param.properties.description.c_str());
 		if (param.properties.presets.size() != 0) {
 			std::vector<int4> presets;
 			for (auto& pr : param.properties.presets)
@@ -735,14 +747,14 @@ ParameterManager::ParameterManager() {
 			ImGui::DragFloat3(param.identifier.c_str(), &vcp.x(), 0, 0, 0);
 			ImGui::GetStyle().Colors[ImGuiCol_FrameBg] = col;
 			if (param.properties.description != "" && ImGui::IsItemHovered())
-				ImGui::SetTooltip(param.properties.description.c_str());
+				ImGui::SetTooltip("%s", param.properties.description.c_str());
 			return;
 		}
 		if (param.properties.range)
 			ImGui::SliderFloat3(param.identifier.c_str(), &var.x(), param.properties.range.value().min, param.properties.range.value().max);
 		else ImGui::DragFloat3(param.identifier.c_str(), &var.x(), 0.01f);
 		if (param.properties.description != "" && ImGui::IsItemHovered())
-			ImGui::SetTooltip(param.properties.description.c_str());
+			ImGui::SetTooltip("%s", param.properties.description.c_str());
 		if (param.properties.presets.size() != 0) {
 			std::vector<float3> presets;
 			for (auto& pr : param.properties.presets)
@@ -772,14 +784,14 @@ ParameterManager::ParameterManager() {
 			ImGui::DragFloat3(param.identifier.c_str(), &vcp.x(), 0, 0, 0);
 			ImGui::GetStyle().Colors[ImGuiCol_FrameBg] = col;
 			if (param.properties.description != "" && ImGui::IsItemHovered())
-				ImGui::SetTooltip(param.properties.description.c_str());
+				ImGui::SetTooltip("%s", param.properties.description.c_str());
 			return;
 		}
 		if (param.properties.range)
 			ImGui::SliderFloat3(param.identifier.c_str(), &var.x(), (float)(double)param.properties.range.value().min, (float)(double)param.properties.range.value().max);
 		else ImGui::DragFloat3(param.identifier.c_str(), &var.x(), 0.01f);
 		if (param.properties.description != "" && ImGui::IsItemHovered())
-			ImGui::SetTooltip(param.properties.description.c_str());
+			ImGui::SetTooltip("%s", param.properties.description.c_str());
 		if (varb.x() != var.x() || varb.y() != var.y() || varb.z() != var.z()) vard = double3{ (double)var.x(), (double)var.y(),(double)var.z() };
 		if (param.properties.presets.size() != 0) {
 			std::vector<double3> presets;
@@ -809,14 +821,14 @@ ParameterManager::ParameterManager() {
 			ImGui::DragInt3(param.identifier.c_str(), &vcp.x(), 0, 0, 0);
 			ImGui::GetStyle().Colors[ImGuiCol_FrameBg] = col;
 			if (param.properties.description != "" && ImGui::IsItemHovered())
-				ImGui::SetTooltip(param.properties.description.c_str());
+				ImGui::SetTooltip("%s", param.properties.description.c_str());
 			return;
 		}
 		if (param.properties.range)
 			ImGui::SliderInt3(param.identifier.c_str(), &var.x(), param.properties.range.value().min, param.properties.range.value().max);
 		else ImGui::DragInt3(param.identifier.c_str(), &var.x(), 1.f);
 		if (param.properties.description != "" && ImGui::IsItemHovered())
-			ImGui::SetTooltip(param.properties.description.c_str());
+			ImGui::SetTooltip("%s", param.properties.description.c_str());
 		if (param.properties.presets.size() != 0) {
 			std::vector<int3> presets;
 			for (auto& pr : param.properties.presets)
@@ -844,14 +856,14 @@ ParameterManager::ParameterManager() {
 			ImGui::DragFloat2(param.identifier.c_str(), &vcp.x(), 0, 0, 0);
 			ImGui::GetStyle().Colors[ImGuiCol_FrameBg] = col;
 			if (param.properties.description != "" && ImGui::IsItemHovered())
-				ImGui::SetTooltip(param.properties.description.c_str());
+				ImGui::SetTooltip("%s", param.properties.description.c_str());
 			return;
 		}
 		if (param.properties.range)
 			ImGui::SliderFloat2(param.identifier.c_str(), &var.x(), param.properties.range.value().min, param.properties.range.value().max);
 		else ImGui::DragFloat2(param.identifier.c_str(), &var.x(), 0.01f);
 		if (param.properties.description != "" && ImGui::IsItemHovered())
-			ImGui::SetTooltip(param.properties.description.c_str());
+			ImGui::SetTooltip("%s", param.properties.description.c_str());
 		if (param.properties.presets.size() != 0) {
 			std::vector<float2> presets;
 			for (auto& pr : param.properties.presets)
@@ -881,14 +893,14 @@ ParameterManager::ParameterManager() {
 			ImGui::DragFloat2(param.identifier.c_str(), &vcp.x(), 0, 0, 0);
 			ImGui::GetStyle().Colors[ImGuiCol_FrameBg] = col;
 			if (param.properties.description != "" && ImGui::IsItemHovered())
-				ImGui::SetTooltip(param.properties.description.c_str());
+				ImGui::SetTooltip("%s", param.properties.description.c_str());
 			return;
 		}
 		if (param.properties.range)
 			ImGui::SliderFloat2(param.identifier.c_str(), &var.x(), (float)(double)param.properties.range.value().min, (float)(double)param.properties.range.value().max);
 		else ImGui::DragFloat2(param.identifier.c_str(), &var.x(), 0.01f);
 		if (param.properties.description != "" && ImGui::IsItemHovered())
-			ImGui::SetTooltip(param.properties.description.c_str());
+			ImGui::SetTooltip("%s", param.properties.description.c_str());
 		if (varb.x() != var.x() || varb.y() != var.y()) vard = double2{ (double)var.x(), (double)var.y() };
 		if (param.properties.presets.size() != 0) {
 			std::vector<double2> presets;
@@ -918,14 +930,14 @@ ParameterManager::ParameterManager() {
 			ImGui::DragInt2(param.identifier.c_str(), &vcp.x(), 0, 0, 0);
 			ImGui::GetStyle().Colors[ImGuiCol_FrameBg] = col;
 			if (param.properties.description != "" && ImGui::IsItemHovered())
-				ImGui::SetTooltip(param.properties.description.c_str());
+				ImGui::SetTooltip("%s", param.properties.description.c_str());
 			return;
 		}
 		if (param.properties.range)
 			ImGui::SliderInt2(param.identifier.c_str(), &var.x(), param.properties.range.value().min, param.properties.range.value().max);
 		else ImGui::DragInt2(param.identifier.c_str(), &var.x(), 1.f);
 		if (param.properties.description != "" && ImGui::IsItemHovered())
-			ImGui::SetTooltip(param.properties.description.c_str());
+			ImGui::SetTooltip("%s", param.properties.description.c_str());
 		if (param.properties.presets.size() != 0) {
 			std::vector<int2> presets;
 			for (auto& pr : param.properties.presets)
@@ -1058,7 +1070,7 @@ void ParameterManager::buildImguiWindow(bool* p_open) {
 				for (auto p : param.second) {
 					//std::cout << p.first << "::"<<p.second << std::endl;
 					if (uiFunctions.find(p.second->type) == uiFunctions.end()) {
-						ImGui::Text(p.first.c_str());
+						ImGui::Text("%s", p.first.c_str());
 					}
 					else {
 						uiFunctions[p.second->type](*p.second);
