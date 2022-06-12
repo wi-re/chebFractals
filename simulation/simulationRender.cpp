@@ -242,8 +242,8 @@ auto getStep = [method, learningRate](cheb::complex location, cheb::complex prio
         case optimizationMethod::newton:{            
         auto fx = evalFunction(location);
         auto dx = evalDerivative(location);
-        dx = 2. * fx * dx;
-        fx = fx * fx; //fx.real() * fx.real() + fx.imag() * fx.imag();
+        //dx = 2. * fx * dx;
+        //fx = fx * fx; //fx.real() * fx.real() + fx.imag() * fx.imag();
         return - fx/ dx;
         }
         case optimizationMethod::halley:{        
@@ -736,7 +736,7 @@ if(stringMethod == "gradientDescent")
 
 auto getStep = [method, learningRate](cheb::complex location, cheb::complex prior, bool usePrior){
     switch(method){
-        case optimizationMethod::gradientDescent: case optimizationMethod::newton:{
+        case optimizationMethod::gradientDescent:{
         auto fx = evalFunction(location);
         auto dx = evalDerivative(location);
         auto d2x = evalSecondDerivative(location);
@@ -759,11 +759,11 @@ auto getStep = [method, learningRate](cheb::complex location, cheb::complex prio
         else
             return -dx * learningRate;
         }
-        // case optimizationMethod::newton:{            
-        // auto fx = evalFunction(location);
-        // auto dx = evalDerivative(location);
-        // return - fx/ dx;
-        // }
+         case optimizationMethod::newton:{            
+         auto fx = evalFunction(location);
+         auto dx = evalDerivative(location);
+         return - fx/ dx;
+         }
         case optimizationMethod::halley:{        
             auto fx = evalFunction(location);
             auto dx = evalDerivative(location);

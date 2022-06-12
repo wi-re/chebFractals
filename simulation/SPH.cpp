@@ -111,31 +111,71 @@ std::filesystem::path resolveFile(std::string fileName, std::vector<std::string>
 }
 
 
+cheb::complex clenshaw(cheb::complex x, const cheb::svec& ak) {
+	if (ak.size() == 0)
+		return 0.0;
+	if (ak.size() == 1)
+		return ak[0];
+	//if (any(ak, [](auto s) {return std::isnan(s); }))
+	//    return std::nan("") * svec(1., xx.size());
+	cheb::complex bk1 = 0.0;
+	cheb::complex bk2 = 0.0;
+	x *= 2.0;
 
-	cheb::complex clenshaw(cheb::complex x, const cheb::svec& ak) {
+	for (int32_t k = (int32_t)ak.size() - 1; k > 1; k -= 2) {
+		bk2 = ak[k] + x * bk1 - bk2;
+		bk1 = ak[k - 1] + x * bk2 - bk1;
+	}
+	if ((ak.size() - 1) % 2 == 1) {
+		auto temp = bk1;
+		bk1 = ak[1] + x * bk1 - bk2;
+		bk2 = temp;
+	}
+	cheb::complex res = 0.0;
+	res = ak[0] + 0.5 * x * bk1 - bk2;
+
+	return res;
+}
+
+	std::tuple<cheb::complex,std::pair<cheb::complex,cheb::complex>> clenshawDeriv(cheb::complex val, const cheb::svec& ak) {
 		if (ak.size() == 0)
-			return 0.0;
+			return std::make_tuple(0.0,std::make_pair(0.0,0.0));
 		if (ak.size() == 1)
-			return ak[0];
-		//if (any(ak, [](auto s) {return std::isnan(s); }))
-		//    return std::nan("") * svec(1., xx.size());
-		cheb::complex bk1 = 0.0;
-		cheb::complex bk2 = 0.0;
-		x *= 2.0;
+			return std::make_tuple(ak[0], std::make_pair(0.0, 0.0));
 
-		for (int32_t k = (int32_t)ak.size() - 1; k > 1; k -= 2) {
-            bk2 = ak[k] + x * bk1 - bk2;
-            bk1 = ak[k - 1] + x * bk2 - bk1;
-		}
-		if ((ak.size() - 1) % 2 == 1) {
-            auto temp = bk1;
-            bk1 = ak[1] + x * bk1 - bk2;
-            bk2 = temp;
-		}
-		cheb::complex res = 0.0;
-		res = ak[0] + 0.5 * x * bk1 - bk2;
+		cheb::svec bkr(ak.size() + 2, 0.0);
+		cheb::svec bki(ak.size() + 2, 0.0);
+		cheb::svec bkr_x(ak.size() + 2, 0.0);
+		cheb::svec bki_x(ak.size() + 2, 0.0);
+		cheb::svec bkr_y(ak.size() + 2, 0.0);
+		cheb::svec bki_y(ak.size() + 2, 0.0);
 
-		return res;
+		auto x = val.real();
+		auto y = val.imag();
+
+
+		for (int32_t k = (int32_t)ak.size() - 1; k >= 1; k -= 1) {			
+			bkr  [k] = ak[k] - bkr  [k + 2] + 2. * (x * bkr  [k + 1]              - y * bki  [k + 1]);
+			bkr_x[k] =       - bkr_x[k + 2] + 2. * (x * bkr_x[k + 1] + bkr[k + 1] - y * bki_x[k + 1]);
+			bkr_y[k] =       - bkr_y[k + 2] + 2. * (x * bkr_y[k + 1]              - y * bki_y[k + 1] - bki[k + 1]);
+
+			bki  [k] =       - bki  [k + 2] + 2. * (x * bki  [k + 1]              + y * bkr  [k + 1]);
+			bki_x[k] =       - bki_x[k + 2] + 2. * (x * bki_x[k + 1] + bki[k + 1] + y * bkr_x[k + 1]);
+			bki_y[k] =       - bki_y[k + 2] + 2. * (x * bki_y[k + 1]              + y * bkr_y[k + 1] + bkr[k + 1]);
+		}
+		int32_t k = 0;
+		bkr  [k] = ak[k] - bkr  [k + 2] + 1. * (x * bkr  [k + 1]              - y * bki  [k + 1]);
+		bkr_x[k] =       - bkr_x[k + 2] + 1. * (x * bkr_x[k + 1] + bkr[k + 1] - y * bki_x[k + 1]);
+		bkr_y[k] =       - bkr_y[k + 2] + 1. * (x * bkr_y[k + 1]              - y * bki_y[k + 1] - bki[k + 1]);
+
+		bki  [k] =       -bki  [k + 2] + 1. * (x * bki  [k + 1]               + y * bkr  [k + 1]);
+		bki_x[k] =       -bki_x[k + 2] + 1. * (x * bki_x[k + 1] + bki[k + 1]  + y * bkr_x[k + 1]);
+		bki_y[k] =       -bki_y[k + 2] + 1. * (x * bki_y[k + 1]               + y * bkr_y[k + 1] + bkr[k + 1]);
+
+		return std::make_tuple(
+			cheb::complex(bkr[0],bki[0]), 
+			std::make_pair(cheb::complex(bkr_x[0], bki_x[0]), 
+				cheb::complex(bkr_y[0], bki_y[0])));
 	}
 
 
@@ -146,7 +186,33 @@ cheb::Function globalFunctionSecondDerivative;
 cheb::complex evalFunction(cheb::complex location){
     return clenshaw(location, globalFunction.funs[0].coeffs());
 }
+std::mutex m;
 cheb::complex evalDerivative(cheb::complex location){
+	auto [fx, Jx] = clenshawDeriv(location, globalFunction.funs[0].coeffs());
+	auto c = clenshaw(location, globalFunctionFirstDerivative.funs[0].coeffs());
+
+	//{
+	//	auto fc = clenshaw(location, globalFunction.funs[0].coeffs());
+	//	std::lock_guard lg(m);
+	//	auto hx = 1e-8;
+	//	auto x = clenshaw(location + cheb::complex(0., 0.), globalFunction.funs[0].coeffs());
+	//	auto xr = clenshaw(location + cheb::complex(hx, 0.), globalFunction.funs[0].coeffs());
+	//	auto xi = clenshaw(location + cheb::complex(0., hx), globalFunction.funs[0].coeffs());
+
+	//	std::cout << location.real() << " : " << location.imag() << " -> " << fx.real() << " : " << fx.imag() << " - " << fc.real() << " - " << fc.imag() << std::endl;
+	//	std::cout << "Clenshaw: " << c.real() << " : " << c.imag() << std::endl;
+	//	std::cout << "Jacobian: " << Jx.first.real() << " : " << Jx.second.real() << " \\ " << Jx.first.imag() << " : " << Jx.second.imag() << std::endl;
+	//	std::cout << "Finite:   " << (xr - x).real() / hx << " : " << (xr - x).imag() / hx << " \\ " << (xi - x).real() / hx << " : " << (xi - x).imag() / hx << std::endl;
+	//	std::cout << std::endl;
+	//	std::cout << c.real() / Jx.first.real() << " : " << c.imag() / Jx.second.real() << std::endl;
+	//	std::cout << c.real() / Jx.first.imag() << " : " << c.imag() / Jx.second.imag() << std::endl;
+ //
+	//
+	//
+	//}
+	return cheb::complex(Jx.first.real(), Jx.first.imag());
+	return cheb::complex(Jx.second.imag(), -Jx.second.real());
+
     return clenshaw(location, globalFunctionFirstDerivative.funs[0].coeffs());
 }
 cheb::complex evalSecondDerivative(cheb::complex location){
