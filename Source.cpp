@@ -33,8 +33,9 @@ int main(int argc, char* argv[])
     // globalFunction = cheb::Function([](cheb::scalar x){ return std::cos(x * 13.) * sin(x * 25.);},cheb::Domain{-1.,1.});
     // globalFunction = cheb::Function(std::vector<cheb::IntervalFunction>{cheb::IntervalFunction(coefficients)});
     // globalFunction = cheb::Function([](cheb::scalar x) { return std::tan(x); }, cheb::Domain{-1.,1.});
-    //globalFunction = cheb::Function([](cheb::scalar x) { return x * x * x - 1.; }, cheb::Domain{ -1.,1. });
-     globalFunction = cheb::Function([](cheb::scalar x) { return x * x * x - 2. * x + 2.; }, cheb::Domain{ -1.,1. });
+    // globalFunction = cheb::Function([](cheb::scalar x) { return x * x * x - 1.; }, cheb::Domain{ -1.,1. });
+    //  globalFunction = cheb::Function([](cheb::scalar x) { return x * x * x - 2. * x + 2.; }, cheb::Domain{ -1.,1. });
+    globalFunction = cheb::Function([](cheb::scalar x) { return x * x * x * x * x - 1; }, cheb::Domain{ -1.,1. });
     globalFunctionFirstDerivative = globalFunction.derivative();
     globalFunctionSecondDerivative = globalFunctionFirstDerivative.derivative();
 
@@ -49,7 +50,7 @@ int main(int argc, char* argv[])
     evalDerivative(cheb::complex(1, -1));
     evalDerivative(cheb::complex(1, 1));
     evalDerivative(cheb::complex(0, 0));
-    //system("pause");
+    system("pause");
 
     auto& gui = GUI::instance();
     gui.render_lock.lock();

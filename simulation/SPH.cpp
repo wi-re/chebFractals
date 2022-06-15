@@ -137,45 +137,51 @@ cheb::complex clenshaw(cheb::complex x, const cheb::svec& ak) {
 	return res;
 }
 
-	std::tuple<cheb::complex,std::pair<cheb::complex,cheb::complex>> clenshawDeriv(cheb::complex val, const cheb::svec& ak) {
+	struct complexState{
+		FunctionState r, i;
+	};
+
+	complexState clenshawDeriv(cheb::complex val, const cheb::svec& ak) {
 		if (ak.size() == 0)
-			return std::make_tuple(0.0,std::make_pair(0.0,0.0));
+			return complexState{};
 		if (ak.size() == 1)
-			return std::make_tuple(ak[0], std::make_pair(0.0, 0.0));
+			return complexState{.r = FunctionState{.f = ak[0]}};
 
-		cheb::svec bkr(ak.size() + 2, 0.0);
-		cheb::svec bki(ak.size() + 2, 0.0);
-		cheb::svec bkr_x(ak.size() + 2, 0.0);
-		cheb::svec bki_x(ak.size() + 2, 0.0);
-		cheb::svec bkr_y(ak.size() + 2, 0.0);
-		cheb::svec bki_y(ak.size() + 2, 0.0);
-
+		std::vector<complexState> b(ak.size() + 2);
 		auto x = val.real();
 		auto y = val.imag();
 
 
-		for (int32_t k = (int32_t)ak.size() - 1; k >= 1; k -= 1) {			
-			bkr  [k] = ak[k] - bkr  [k + 2] + 2. * (x * bkr  [k + 1]              - y * bki  [k + 1]);
-			bkr_x[k] =       - bkr_x[k + 2] + 2. * (x * bkr_x[k + 1] + bkr[k + 1] - y * bki_x[k + 1]);
-			bkr_y[k] =       - bkr_y[k + 2] + 2. * (x * bkr_y[k + 1]              - y * bki_y[k + 1] - bki[k + 1]);
+		for (int32_t k = (int32_t)ak.size() - 1; k >= 0; k -= 1) {	
+			auto s = k == 0 ? 1. : 2.;
 
-			bki  [k] =       - bki  [k + 2] + 2. * (x * bki  [k + 1]              + y * bkr  [k + 1]);
-			bki_x[k] =       - bki_x[k + 2] + 2. * (x * bki_x[k + 1] + bki[k + 1] + y * bkr_x[k + 1]);
-			bki_y[k] =       - bki_y[k + 2] + 2. * (x * bki_y[k + 1]              + y * bkr_y[k + 1] + bkr[k + 1]);
+
+			b[k].r.f        = ak[k] - b[k+2].r.f        + s * (x * b[k+1].r.f                                            - y * b[k+1].i.f);
+
+			b[k].r.J.dfdx   =       - b[k+2].r.J.dfdx   + s * (x * b[k+1].r.J.dfdx                     + b[k+1].r.f      - y * b[k+1].i.J.dfdx);
+
+			b[k].r.H.d2fdx2 =       - b[k+2].r.H.d2fdx2 + s * (x * b[k+1].r.H.d2fdx2 + b[k+1].r.J.dfdx + b[k+1].r.J.dfdx - y * b[k+1].i.H.d2fdx2);
+			b[k].r.H.d2fdxy =       - b[k+2].r.H.d2fdxy + s * (x * b[k+1].r.H.d2fdxy + b[k+1].r.J.dfdy                   - y * b[k+1].i.H.d2fdxy - b[k+1].i.J.dfdx);
+
+			b[k].r.J.dfdy   =       - b[k+2].r.J.dfdy   + s * (x * b[k+1].r.J.dfdy                                       - y * b[k+1].i.J.dfdy - b[k+1].i.f);
+
+			b[k].r.H.d2fdyx =       - b[k+2].r.H.d2fdyx + s * (x * b[k+1].r.H.d2fdyx + b[k+1].r.J.dfdy                   - y * b[k+1].i.H.d2fdyx - b[k+1].i.J.dfdx);
+			b[k].r.H.d2fdy2 =       - b[k+2].r.H.d2fdy2 + s * (x * b[k+1].r.H.d2fdy2                                     - y * b[k+1].i.H.d2fdy2 - b[k+1].i.J.dfdy - b[k+1].i.J.dfdy);
+
+			b[k].i.f        =       - b[k+2].i.f        + s * (x * b[k+1].i.f                                            + y * b[k+1].r.f);
+
+			b[k].i.J.dfdx   =       - b[k+2].i.J.dfdx   + s * (x * b[k+1].i.J.dfdx                     + b[k+1].i.f      + y * b[k+1].r.J.dfdx);
+
+			b[k].i.H.d2fdx2 =       - b[k+2].i.H.d2fdx2 + s * (x * b[k+1].i.H.d2fdx2 + b[k+1].i.J.dfdx + b[k+1].i.J.dfdx + y * b[k+1].r.H.d2fdx2);
+			b[k].i.H.d2fdxy =       - b[k+2].i.H.d2fdxy + s * (x * b[k+1].i.H.d2fdxy + b[k+1].i.J.dfdy                   + y * b[k+1].r.H.d2fdxy + b[k+1].r.J.dfdx);
+
+			b[k].i.J.dfdy   =       - b[k+2].i.J.dfdy   + s * (x * b[k+1].i.J.dfdy                                       + y * b[k+1].r.J.dfdy   + b[k+1].r.f);
+
+			b[k].i.H.d2fdyx =       - b[k+2].i.H.d2fdyx + s * (x * b[k+1].i.H.d2fdyx + b[k+1].i.J.dfdy                   + y * b[k+1].r.H.d2fdyx + b[k+1].r.J.dfdx);
+			b[k].i.H.d2fdy2 =       - b[k+2].i.H.d2fdy2 + s * (x * b[k+1].i.H.d2fdy2                                     + y * b[k+1].r.H.d2fdy2 + b[k+1].r.J.dfdy + b[k+1].r.J.dfdy);
 		}
-		int32_t k = 0;
-		bkr  [k] = ak[k] - bkr  [k + 2] + 1. * (x * bkr  [k + 1]              - y * bki  [k + 1]);
-		bkr_x[k] =       - bkr_x[k + 2] + 1. * (x * bkr_x[k + 1] + bkr[k + 1] - y * bki_x[k + 1]);
-		bkr_y[k] =       - bkr_y[k + 2] + 1. * (x * bkr_y[k + 1]              - y * bki_y[k + 1] - bki[k + 1]);
 
-		bki  [k] =       -bki  [k + 2] + 1. * (x * bki  [k + 1]               + y * bkr  [k + 1]);
-		bki_x[k] =       -bki_x[k + 2] + 1. * (x * bki_x[k + 1] + bki[k + 1]  + y * bkr_x[k + 1]);
-		bki_y[k] =       -bki_y[k + 2] + 1. * (x * bki_y[k + 1]               + y * bkr_y[k + 1] + bkr[k + 1]);
-
-		return std::make_tuple(
-			cheb::complex(bkr[0],bki[0]), 
-			std::make_pair(cheb::complex(bkr_x[0], bki_x[0]), 
-				cheb::complex(bkr_y[0], bki_y[0])));
+		return b[0];
 	}
 
 
@@ -188,33 +194,103 @@ cheb::complex evalFunction(cheb::complex location){
 }
 std::mutex m;
 cheb::complex evalDerivative(cheb::complex location){
-	auto [fx, Jx] = clenshawDeriv(location, globalFunction.funs[0].coeffs());
-	auto c = clenshaw(location, globalFunctionFirstDerivative.funs[0].coeffs());
+	auto [fr, fi] = clenshawDeriv(location, globalFunction.funs[0].coeffs());
 
-	//{
-	//	auto fc = clenshaw(location, globalFunction.funs[0].coeffs());
-	//	std::lock_guard lg(m);
-	//	auto hx = 1e-8;
-	//	auto x = clenshaw(location + cheb::complex(0., 0.), globalFunction.funs[0].coeffs());
-	//	auto xr = clenshaw(location + cheb::complex(hx, 0.), globalFunction.funs[0].coeffs());
-	//	auto xi = clenshaw(location + cheb::complex(0., hx), globalFunction.funs[0].coeffs());
+	cheb::complex f(fr.f, fi.f);
+	Jacobian J(fr.J.dfdx, fi.J.dfdx);
+	Hessian H(fr.H.d2fdx2, fr.H.d2fdxy, fi.H.d2fdx2, fi.H.d2fdxy);
 
-	//	std::cout << location.real() << " : " << location.imag() << " -> " << fx.real() << " : " << fx.imag() << " - " << fc.real() << " - " << fc.imag() << std::endl;
-	//	std::cout << "Clenshaw: " << c.real() << " : " << c.imag() << std::endl;
-	//	std::cout << "Jacobian: " << Jx.first.real() << " : " << Jx.second.real() << " \\ " << Jx.first.imag() << " : " << Jx.second.imag() << std::endl;
-	//	std::cout << "Finite:   " << (xr - x).real() / hx << " : " << (xr - x).imag() / hx << " \\ " << (xi - x).real() / hx << " : " << (xi - x).imag() / hx << std::endl;
-	//	std::cout << std::endl;
-	//	std::cout << c.real() / Jx.first.real() << " : " << c.imag() / Jx.second.real() << std::endl;
-	//	std::cout << c.real() / Jx.first.imag() << " : " << c.imag() / Jx.second.imag() << std::endl;
- //
-	//
-	//
-	//}
-	return cheb::complex(Jx.first.real(), Jx.first.imag());
-	return cheb::complex(Jx.second.imag(), -Jx.second.real());
+	// {
+	// 	std::lock_guard lg(m);
+	// 	// auto fc = clenshaw(location, globalFunction.funs[0].coeffs());
+	// 	// auto hx = 1e-8;
+	// 	// auto x = clenshaw(location + cheb::complex(0., 0.), globalFunction.funs[0].coeffs());
+	// 	// auto xr = clenshaw(location + cheb::complex(hx, 0.), globalFunction.funs[0].coeffs());
+	// 	// auto xi = clenshaw(location + cheb::complex(0., hx), globalFunction.funs[0].coeffs());
+
+	// 	// std::cout << location.real() << " : " << location.imag() << " -> " << fx.real() << " : " << fx.imag() << " - " << fc.real() << " - " << fc.imag() << std::endl;
+	// 	// std::cout << "Clenshaw: " << c.real() << " : " << c.imag() << std::endl;
+	// 	// std::cout << "Jacobian: " << Jx.first.real() << " : " << Jx.second.real() << " \\ " << Jx.first.imag() << " : " << Jx.second.imag() << std::endl;
+	// 	// std::cout << "Finite:   " << (xr - x).real() / hx << " : " << (xr - x).imag() / hx << " \\ " << (xi - x).real() / hx << " : " << (xi - x).imag() / hx << std::endl;
+	// 	// std::cout << std::endl;
+	// 	// std::cout << c.real() / Jx.first.real() << " : " << c.imag() / Jx.second.real() << std::endl;
+	// 	// std::cout << c.real() / Jx.first.imag() << " : " << c.imag() / Jx.second.imag() << std::endl;
+	// 	std::cout << "Evaluated at x = " << location.real() << " + " << location.imag() << "i" << std::endl;
+	// 	std::cout << "Analytical:\n";
+
+	// 	std::cout << "\t f(x) = " << fr.f << " + " << fi.f << "i\n";
+	// 	std::cout << "\t J(x) = [ " << fr.J.dfdx << " " << fr.J.dfdy << " ] \\\\ [ " << fi.J.dfdx << " " << fi.J.dfdy << "]\n";
+	// 	std::cout << "\t H(x)r= [ " << fr.H.d2fdx2 << " " << fr.H.d2fdxy << " ] \\\\ [ " << fr.H.d2fdyx << " " << fr.H.d2fdy2 << "]\n";
+	// 	std::cout << "\t H(x)i= [ " << fi.H.d2fdx2 << " " << fi.H.d2fdxy << " ] \\\\ [ " << fi.H.d2fdyx << " " << fi.H.d2fdy2 << "]\n";
+		
+	// 	auto hx = 1e-8;
+	// 	auto x   = clenshaw(location + cheb::complex(0., 0.), globalFunction.funs[0].coeffs());
+	// 	auto xrp = clenshaw(location + cheb::complex(hx, 0.), globalFunction.funs[0].coeffs());
+	// 	auto xip = clenshaw(location + cheb::complex(0., hx), globalFunction.funs[0].coeffs());
+	// 	auto xrm = clenshaw(location - cheb::complex(hx, 0.), globalFunction.funs[0].coeffs());
+	// 	auto xim = clenshaw(location - cheb::complex(0., hx), globalFunction.funs[0].coeffs());
+
+	// 	std::cout << "\nNumerical:\n";
+	// 	std::cout << "Finite:   " << (xrp - x).real() / hx << " : " << (xip - x).real() / hx << " \\ " << (xrp - x).imag() / hx << " : " << (xip - x).imag() / hx << std::endl;
+
+
+	// 	std::cout << "\nClenshaw:\n";
+	// 	auto dc = clenshaw(location, globalFunctionFirstDerivative.funs[0].coeffs());
+	// 	auto d2c = clenshaw(location, globalFunctionSecondDerivative.funs[0].coeffs());
+	// 	std::cout << "\t f'(x) = "  << dc.real() << " + " << dc.imag() << "i\n";
+	// 	std::cout << "\t f''(x) = " << d2c.real() << " + " << d2c.imag() << "i\n";
+	// 	{
+			
+	// 		auto hx = 1e-8;
+	// 		auto x   = clenshaw(location + cheb::complex(0., 0.), globalFunctionFirstDerivative.funs[0].coeffs());
+	// 		auto xrp = clenshaw(location + cheb::complex(hx, 0.), globalFunctionFirstDerivative.funs[0].coeffs());
+	// 		auto xip = clenshaw(location + cheb::complex(0., hx), globalFunctionFirstDerivative.funs[0].coeffs());
+	// 		auto xrm = clenshaw(location - cheb::complex(hx, 0.), globalFunctionFirstDerivative.funs[0].coeffs());
+	// 		auto xim = clenshaw(location - cheb::complex(0., hx), globalFunctionFirstDerivative.funs[0].coeffs());
+
+	// 		std::cout << "\nNumerical:\n";
+	// 		std::cout << "Finite Hessian:   " << (xrp - x).real() / hx << " : " << (xip - x).real() / hx << " \\ " << (xrp - x).imag() / hx << " : " << (xip - x).imag() / hx << std::endl;
+	// 	}
+
+
+	// 	std::cout << std::endl << std::endl;
+	
+	
+	// }
+	return cheb::complex(fr.J.dfdx, fi.J.dfdx);
+	//return cheb::complex(Jx.second.imag(), -Jx.second.real());
 
     return clenshaw(location, globalFunctionFirstDerivative.funs[0].coeffs());
 }
 cheb::complex evalSecondDerivative(cheb::complex location){
     return clenshaw(location, globalFunctionSecondDerivative.funs[0].coeffs());
+}
+
+
+std::tuple<cheb::complex, cheb::complex, cheb::complex> evalPolynomial(cheb::complex location){
+	auto [fr, fi] = clenshawDeriv(location, globalFunction.funs[0].coeffs());
+
+	cheb::complex f(fr.f, fi.f);
+	Jacobian J(fr.J.dfdx, fi.J.dfdx);
+	Hessian H(fr.H.d2fdx2, fr.H.d2fdxy, fi.H.d2fdx2, fi.H.d2fdxy);
+	return std::make_tuple(f, cheb::complex(J.dfdx, J.dfdy), cheb::complex(H.d2fdx2,H.d2fdyx));
+}
+
+FunctionState evalSquarePolynomial(cheb::complex location){
+	auto [fr, fi] = clenshawDeriv(location, globalFunction.funs[0].coeffs());
+
+	auto f = fr.f * fr.f + fi.f * fi.f;
+
+	auto dfdx = 2. * fr.f * fr.J.dfdx + 2. * fi.f * fi.J.dfdx;
+	auto dfdy = 2. * fr.f * fr.J.dfdy + 2. * fi.f * fi.J.dfdy;
+
+	auto d2fdx2 = 2. * (fr.J.dfdx * fr.J.dfdx + fr.f * fr.H.d2fdx2 + fi.J.dfdx * fi.J.dfdx + fi.f * fi.H.d2fdx2);
+	auto d2fdxy = 2. * (fr.J.dfdy * fr.J.dfdx + fr.f * fr.H.d2fdxy + fi.J.dfdy * fi.J.dfdx + fi.f * fi.H.d2fdxy);
+	auto d2fdyx = 2. * (fr.J.dfdy * fr.J.dfdx + fr.f * fr.H.d2fdyx + fi.J.dfdy * fi.J.dfdx + fi.f * fi.H.d2fdyx);
+	auto d2fdy2 = 2. * (fr.J.dfdy * fr.J.dfdy + fr.f * fr.H.d2fdy2 + fi.J.dfdy * fi.J.dfdy + fi.f * fi.H.d2fdy2);
+
+	Jacobian J{dfdx,dfdy};
+	Hessian H{d2fdx2, d2fdxy, d2fdyx, d2fdy2};
+
+	return FunctionState{f,J,H};
 }

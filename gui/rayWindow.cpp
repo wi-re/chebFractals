@@ -5,7 +5,7 @@
 #include <simulation/SPHRender.h>
 
 void GUI::RayWindow(bool* p_open) {
-    //return;
+    return;
     ImGui::SetNextWindowSizeConstraints(ImVec2(1024, 512), ImVec2(FLT_MAX, FLT_MAX));
     if (!ImGui::Begin("Cheb Window", p_open))
     {

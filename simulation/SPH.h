@@ -69,6 +69,25 @@ extern cheb::Function globalFunction;
 extern cheb::Function globalFunctionFirstDerivative;
 extern cheb::Function globalFunctionSecondDerivative;
 
+
+	struct Jacobian{
+		cheb::scalar dfdx = 0.0, dfdy = 0.0; 
+	};
+
+	struct Hessian{
+		cheb::scalar d2fdx2 = 0.0, d2fdxy = 0.0;
+		cheb::scalar d2fdyx = 0.0, d2fdy2 = 0.0;
+	};
+
+	struct FunctionState{
+		cheb::scalar f = 0.0;
+		Jacobian J;
+		Hessian H;
+	};
+
 cheb::complex evalFunction(cheb::complex location);
 cheb::complex evalDerivative(cheb::complex location);
 cheb::complex evalSecondDerivative(cheb::complex location);
+
+std::tuple<cheb::complex, cheb::complex, cheb::complex>  evalPolynomial(cheb::complex location);
+FunctionState evalSquarePolynomial(cheb::complex location);
