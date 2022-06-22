@@ -5,7 +5,7 @@
 #include <simulation/SPHRender.h>
 
 void GUI::RayWindow(bool* p_open) {
-    return;
+    // return;
     ImGui::SetNextWindowSizeConstraints(ImVec2(1024, 512), ImVec2(FLT_MAX, FLT_MAX));
     if (!ImGui::Begin("Cheb Window", p_open))
     {
@@ -14,16 +14,17 @@ void GUI::RayWindow(bool* p_open) {
     }
     static std::array<float, 1024> xValues;
     static std::array<float, 1024> yValues;
-    static std::vector<float> coefficients;
-    static std::vector<float> coefficientsdx;
-    static std::vector<float> coefficientsd2x;
+    std::vector<float> coefficients;
+    std::vector<float> coefficientsdx;
+    std::vector<float> coefficientsd2x;
     static bool once = true;
-    static float xmin = -1.;
-    static float xmax = 1.;
-    static float fmin = 0.;
-    static float fmax = 1.;
+    float xmin = -1.;
+    float xmax = 1.;
+    float fmin = 0.;
+    float fmax = 1.;
 
-    if(once){
+    //if(once)
+    {
     for(int32_t i = 0; i < 1024; ++i){
         scalar x = -1. + ((scalar) i) / 1023. * 2.;
         xValues[i] = (float) x;

@@ -294,3 +294,4 @@ FunctionState evalSquarePolynomial(cheb::complex location){
 
 	return FunctionState{f,J,H};
 }
+std::vector<std::vector<double>> globalCoefficients;

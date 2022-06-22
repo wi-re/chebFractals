@@ -42,6 +42,8 @@ inline int32_t screenWidth = 2048;
 inline int32_t screenHeight = 2048;
 
 inline float* scalarFieldData = nullptr;
+inline float* angularFieldData = nullptr;
+inline float* normFieldData = nullptr;
 inline int32_t dataWidth = 32;
 inline int32_t dataHeight = 32;
 
@@ -60,6 +62,8 @@ struct Triangle {
     vec v0 = vec(0, 0), v1 = vec(0, 0), v2 = vec(0, 0);
 };
 
+
+extern  std::vector<std::vector<double>> globalCoefficients;
 
 std::filesystem::path resolveFile(std::string fileName, std::vector<std::string> search_paths = {});
 #include <cheb/cheb.h>

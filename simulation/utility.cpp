@@ -36,12 +36,13 @@ void initializeParameters(int32_t scene) {
 
     ParameterManager::instance().newParameter("colorMap.renderMode", std::string("fractal"), { .constant = false, .presets =vectorModes
         });
-    ParameterManager::instance().newParameter("colorMap.colorMap", std::string("viridis"), { .constant = false, .presets = colorMaps
+    ParameterManager::instance().newParameter("colorMap.colorMap", std::string("twilight"), { .constant = false, .presets = colorMaps
         });
 
     auto genRange = [](auto min, auto max) {
         return Range{ min, max };
     };
+    ParameterManager::instance().newParameter("index", 0, { .constant = false ,.range = genRange(0,(int32_t) globalCoefficients.size())});
 
     ParameterManager::instance().newParameter("path.x", 0., { .constant = false ,.range = genRange(-1.,1.)});
     ParameterManager::instance().newParameter("path.y", 0., { .constant = false ,.range = genRange(-1.,1.)});

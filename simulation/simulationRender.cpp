@@ -188,7 +188,7 @@ enum struct buffer_t {
     velocity, angularVelocity, acceleration, density, neighbors, UID, alpha, area, pressure1, pressure2, pressureBoundary, source, dpdt, rhoStar, predictedVelocity, pressureAcceleration, vorticity
 };
 enum struct renderMode_t {
-    real, imag, realGradient, imagGradient, fractal, abs, absGradient
+    real, imag, realGradient, imagGradient, fractal, abs, absGradient, f2, Jx, Jy
 };
 
 #include <mutex>
@@ -226,6 +226,32 @@ auto getStep(cheb::complex location, cheb::complex prior,optimizationMethod meth
         else{
             auto [f, J, H] = evalSquarePolynomial(location);
             dx = cheb::complex(J.dfdx,J.dfdy);
+
+            std::complex a = H.d2fdx2;
+            std::complex b = H.d2fdxy;
+            std::complex c = H.d2fdyx;
+            std::complex d = H.d2fdy2;
+            std::complex T = a + d;
+            std::complex D = a*d-b*c;
+            std::complex l1 = T/2. + std::sqrt(T * T / 4. - D);      
+            std::complex l2 = T/2. - std::sqrt(T * T / 4. - D);      
+            auto l = std::min(l1.real(), l2.real());
+            if(l < 0.){
+                H.d2fdx2 -= l * 1.5;
+                H.d2fdy2 -= l * 1.5;
+            }
+
+            auto det = H.d2fdx2 * H.d2fdy2 - H.d2fdxy * H.d2fdyx;
+
+
+
+            Hessian H_1{ H.d2fdy2 / det, -H.d2fdxy / det, -H.d2fdyx / det, H.d2fdx2/det};
+
+            auto prodx = H_1.d2fdx2 * J.dfdx + H_1.d2fdxy * J.dfdy;
+            auto prody = H_1.d2fdyx * J.dfdx + H_1.d2fdy2 * J.dfdy;
+
+            //dx = cheb::complex(prodx, prody);
+
             return -dx * learningRate;
             }
         }
@@ -236,17 +262,17 @@ auto getStep(cheb::complex location, cheb::complex prior,optimizationMethod meth
             // auto [f, J, H] = evalPolynomial(location);
             // dx = J;
             // fx = f;
-            // return -fx / dx;
+            return -fx / dx;
             // return -dx / d2x;
-            auto [f,J,H] = evalSquarePolynomial(location);
-            auto update = f / (J.dfdx + J.dfdy);
+            // auto [f,J,H] = evalSquarePolynomial(location);
+            // auto update = f / (J.dfdx + J.dfdy);
 
-            auto det = H.d2fdx2 * H.d2fdy2 - H.d2fdxy * H.d2fdyx;
-            Hessian H_1{ H.d2fdy2 / det, -H.d2fdxy / det, -H.d2fdyx / det, H.d2fdx2/det};
+            // auto det = H.d2fdx2 * H.d2fdy2 - H.d2fdxy * H.d2fdyx;
+            // Hessian H_1{ H.d2fdy2 / det, -H.d2fdxy / det, -H.d2fdyx / det, H.d2fdx2/det};
 
-            auto prodx = H_1.d2fdx2 * J.dfdx + H_1.d2fdxy * J.dfdy;
-            auto prody = H_1.d2fdyx * J.dfdx + H_1.d2fdy2 * J.dfdy;
-            return - cheb::complex(prodx, prody);
+            // auto prodx = H_1.d2fdx2 * J.dfdx + H_1.d2fdxy * J.dfdy;
+            // auto prody = H_1.d2fdyx * J.dfdx + H_1.d2fdy2 * J.dfdy;
+            // return - cheb::complex(prodx, prody);
             //return - cheb::complex(update, update);
             //fx = f;
             //dx = cheb::complex(J.dfdx,J.dfdy);
@@ -273,7 +299,7 @@ auto getStep(cheb::complex location, cheb::complex prior,optimizationMethod meth
     }
 };
 
-std::pair<float, float> updateField(float* data) {
+std::pair<float, float> updateField(float* data, float* angular, float* radial) {
     //static std::random_device rd;
     //static std::default_random_engine generator(rd());
     //static std::uniform_real_distribution<double> distribution(0.0, 1.0);
@@ -311,6 +337,8 @@ if(stringMethod == "gradientDescent")
 
     auto modestr = ParameterManager::instance().get<std::string>("colorMap.renderMode");
     static cheb::complex* vectorFieldData;
+    static cheb::complex* functionFieldData;
+    static cheb::complex* inputFieldData;
     static int32_t* iterationFieldData;
     renderMode_t mode = renderMode_t::real;
     if (modestr == "real") mode = renderMode_t::real;
@@ -320,6 +348,9 @@ if(stringMethod == "gradientDescent")
     if (modestr == "imag gradient") mode = renderMode_t::imagGradient;
     if (modestr == "abs gradient") mode = renderMode_t::absGradient;
     if (modestr == "fractal") mode = renderMode_t::fractal;
+    if (modestr == "f2") mode = renderMode_t::f2;
+    if (modestr == "Jx") mode = renderMode_t::Jx;
+    if (modestr == "Jy") mode = renderMode_t::Jy;
     {
     bool dirty = false;
     WATCH(int32_t, field, nx);
@@ -330,6 +361,10 @@ if(stringMethod == "gradientDescent")
         iterationFieldData = (int32_t*) malloc(sizeof(int32_t) * nx * ny);
     if(vectorFieldData == nullptr)
         vectorFieldData = (cheb::complex*) malloc(sizeof(vec) * nx * ny);
+    if(inputFieldData == nullptr)
+        inputFieldData = (cheb::complex*) malloc(sizeof(vec) * nx * ny);
+    if(functionFieldData == nullptr)
+        functionFieldData = (cheb::complex*) malloc(sizeof(vec) * nx * ny);
 
         dataWidth = nx;
         dataHeight = ny;
@@ -341,6 +376,8 @@ if(stringMethod == "gradientDescent")
         scalarFieldData = (float*) realloc(scalarFieldData, total);
         iterationFieldData = (int32_t*) realloc(scalarFieldData, total);
         vectorFieldData = (cheb::complex*) realloc(vectorFieldData, total * 4);
+        inputFieldData = (cheb::complex*) realloc(inputFieldData, total * 4);
+        functionFieldData = (cheb::complex*) realloc(functionFieldData, total * 4);
         dataWidth = nx;
         dataHeight = ny;
     }
@@ -364,6 +401,7 @@ if(stringMethod == "gradientDescent")
             if(mode != renderMode_t::fractal){
                     auto fx = evalFunction(cheb::complex(xPos, yPos));
                     auto dx = evalDerivative(cheb::complex(xPos, yPos));
+                    auto [f,J,H] = evalSquarePolynomial(cheb::complex(xPos, yPos));
                     //auto d2x = evalFunction(cheb::complex(xPos, yPos));
 
                     auto value = 0.;
@@ -374,6 +412,9 @@ if(stringMethod == "gradientDescent")
                         case renderMode_t::realGradient:value = dx.real(); break;
                         case renderMode_t::imagGradient:value = dx.imag(); break;
                         case renderMode_t::absGradient:value = std::abs(dx); break;
+                        case renderMode_t::f2:value = f; break;
+                        case renderMode_t::Jx:value = J.dfdx; break;
+                        case renderMode_t::Jy:value = J.dfdy; break;
                         // case renderMode_t::realGradient:value = std::abs(fx); break;
                     }
 
@@ -384,12 +425,13 @@ if(stringMethod == "gradientDescent")
 int32_t i = 0;
         cheb::complex pos = cheb::complex(xPos,yPos);
         cheb::complex prior = pos;
+        inputFieldData[y * nx + x] = pos;
         // newton
-        for(; i < 128; ++i){
+        for(; i < 1024; ++i){
             auto step = getStep(pos, prior, method,learningRate,i > 0);
             prior = pos;
             pos += step;
-            if(std::abs(step) < 1e-12)break;
+            if(std::abs(step) < 1e-12 || pos != pos)break;
         }
         auto cx = std::clamp(pos.real(), -1., 1.);
         auto cy = std::clamp(pos.imag(), -1., 1.);
@@ -398,6 +440,7 @@ int32_t i = 0;
 
         scalarFieldData[y * nx + x] = val;
         vectorFieldData[y * nx + x] = pos;
+        functionFieldData[y*nx + x] = evalFunction(pos);
         iterationFieldData[y * nx + x] = i;
         // scalarFieldData[y * nx + x] = (float)std::abs(evalFunction(pos));
         if(clustering)
@@ -472,6 +515,36 @@ if(mode == renderMode_t::fractal && clustering){
         }
     }
 }
+    auto minNorm = DBL_MAX;
+    auto maxNorm = 0.;
+    for (int32_t y = 0; y < screenHeight; ++y) {
+        for (int32_t x = 0; x < screenWidth; ++x) {
+            int32_t xi = std::clamp((int32_t)::floor(((scalar) x) / ((scalar) screenWidth) * (scalar) nx),0,nx - 1);
+            int32_t yi = std::clamp((int32_t)::floor(((scalar) y) / ((scalar) screenHeight) * (scalar) ny),0,ny - 1);
+            
+            auto cur = vectorFieldData[yi * nx + xi];
+            if(cur == cur && !std::isinf(cur.real())){
+                minNorm = std::min(minNorm, std::abs(cur));
+                maxNorm = std::max(maxNorm, std::abs(cur));                
+            }
+        }
+    }
+    maxNorm = 1.;
+    for (int32_t y = 0; y < screenHeight; ++y) {
+        for (int32_t x = 0; x < screenWidth; ++x) {
+            int32_t xi = std::clamp((int32_t)::floor(((scalar) x) / ((scalar) screenWidth) * (scalar) nx),0,nx - 1);
+            int32_t yi = std::clamp((int32_t)::floor(((scalar) y) / ((scalar) screenHeight) * (scalar) ny),0,ny - 1);
+            
+            auto cur = vectorFieldData[yi * nx + xi];
+            if(cur == cur && !std::isinf(cur.real())){
+                        //   radial[y * screenWidth + x] = (std::clamp(std::abs(cur), minNorm, maxNorm) - minNorm )/ (maxNorm - minNorm);
+                          radial[y * screenWidth + x] = (std::clamp(std::abs(cur), minNorm, maxNorm))/ (maxNorm);
+                          angular[y * screenWidth + x] = std::arg(cur) + std::numbers::pi;    
+            }
+        }
+    }
+
+
 
 #pragma omp parallel for
     for (int32_t y = 0; y < screenHeight; ++y) {
@@ -494,9 +567,11 @@ if(mode == renderMode_t::fractal && clustering){
 }
 
 void renderField() {
-    static GLuint textureID, vao, texID, program, minUni, maxUni, texUnit;
+    static GLuint textureID, radialTextureID, angularTextureID, vao, texID, angTexID, radTexID, program, minUni, maxUni, texUnit, fracuni;
     static bool once = true;
     static float* data = new float[screenWidth * screenHeight];
+    static float* angularData = new float[screenWidth * screenHeight];
+    static float* radialData = new float[screenWidth * screenHeight];
     if(once){
         std::default_random_engine generator;
         std::uniform_real_distribution<double> distribution(0.0, 1.0);
@@ -522,9 +597,20 @@ in vec2 UV;
 out vec3 color;
 
 uniform sampler2D renderedTexture;
+uniform sampler2D radialTexture;
+uniform sampler2D angularTexture;
 uniform sampler1D colorRamp;
 uniform float min = 0.0;
 uniform float max = 1.0;
+uniform int fractal = 1;
+const float PI = 3.1415926535897932384626433832795;
+
+vec3 hsl2rgb( vec3 c )
+{
+    vec3 rgb = clamp( abs(mod(c.x*6.0+vec3(0.0,4.0,2.0),6.0)-3.0)-1.0, 0.0, 1.0 );
+
+    return c.z + c.y * (rgb-0.5)*(1.0-abs(2.0*c.z-1.0));
+}
 
 void main(){
 float v = texture( renderedTexture, UV ).r;
@@ -532,9 +618,22 @@ float rel = v;//(v - min) / (max - min);
 if(rel < -0.5){
     color = vec3(1,0,0);
     }else{
+        if(fractal == 0){
         float clamped = clamp(rel, 0.0, 1.0);
         vec3 col = texture(colorRamp, clamped).xyz;
         color = col;
+    }else{
+        float hue = texture(angularTexture, UV).r / (2.f * PI);
+        float saturation = 1.;
+        float lightness = texture(radialTexture,UV).r;
+        lightness = lightness * 0.5f + 0.5f;
+        vec3 hsl = vec3(hue, saturation, lightness);
+        //vec3 col = hsl2rgb(hsl);
+        vec3 col = texture(colorRamp, hue).xyz * lightness;
+        //vec3 col = vec3(hue, hue, hue);
+        color = col;
+        }
+
     }
 })";
     GLuint quad_VertexArrayID;
@@ -553,13 +652,20 @@ if(rel < -0.5){
     glGenVertexArrays(1, &vao);
     glBindVertexArray(vao);
     glGenTextures(1, &textureID);
+    glGenTextures(1, &radialTextureID);
+    glGenTextures(1, &angularTextureID);
 
     // "Bind" the newly created texture : all future texture functions will modify this texture
     glBindTexture(GL_TEXTURE_2D, textureID);
-
-    // Give the image to OpenGL
     glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, screenWidth, screenHeight, 0, GL_RED, GL_FLOAT, data);
-
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glBindTexture(GL_TEXTURE_2D, radialTextureID);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, screenWidth, screenHeight, 0, GL_RED, GL_FLOAT, data);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glBindTexture(GL_TEXTURE_2D, angularTextureID);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, screenWidth, screenHeight, 0, GL_RED, GL_FLOAT, data);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
@@ -572,17 +678,25 @@ if(rel < -0.5){
     program = createProgram(vtxShader, frgShader);
 
     glUseProgram(program);
+    angTexID = glGetUniformLocation(program, "angularTexture");
+    radTexID = glGetUniformLocation(program, "radialTexture");
     texID = glGetUniformLocation(program, "renderedTexture");
     minUni = glGetUniformLocation(program, "min");
     maxUni = glGetUniformLocation(program, "max");
+    fracuni = glGetUniformLocation(program, "fractal");
     //std::cout << "texID: " << texID << std::endl;
     //std::cout << "minUni: " << minUni << std::endl;
     //std::cout << "maxUni: " << maxUni << std::endl;
 
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, textureID);
-    // Set our "myTextureSampler" sampler to use Texture Unit 0
     glUniform1i(texID, 1);
+    glActiveTexture(GL_TEXTURE2);
+    glBindTexture(GL_TEXTURE_2D, radialTextureID);
+    glUniform1i(radTexID, 2);
+    glActiveTexture(GL_TEXTURE3);
+    glBindTexture(GL_TEXTURE_2D, angularTextureID);
+    glUniform1i(angTexID, 3);
     glEnableVertexAttribArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, quad_vertexbuffer);
     glVertexAttribPointer(
@@ -599,7 +713,7 @@ if(rel < -0.5){
     v4* color_map = nullptr;
     for (int32_t it = 0; it < 1024; ++it)
         img[it] = v4{ (float)it / (float)1024 * 255.f,(float)it / (float)1024 * 255.f,(float)it / (float)1024 * 255.f, 255.f };
-    std::string file_name = "viridis.png";
+    std::string file_name = "twilight.png";
     if (std::filesystem::exists(file_name)) {
         std::cout << "Loading " << file_name << std::endl;
         unsigned char* image_data = stbi_load(file_name.c_str(), &image_width, &image_height, NULL, 4);
@@ -664,9 +778,9 @@ if(ParameterManager::instance().get<std::string>("colorMap.colorMap") != colorMa
         img = new v4[image_width];
         for (int32_t it = 0; it < image_width; ++it) {
             img[it] = v4{
-            (float)image_data[it * 4 + 0],
-            (float)image_data[it * 4 + 1],
-            (float)image_data[it * 4 + 2], 255.f };
+            (float)image_data[it * 4 + 0 + image_width * (image_height / 2)],
+            (float)image_data[it * 4 + 1 + image_width * (image_height / 2)],
+            (float)image_data[it * 4 + 2 + image_width * (image_height / 2)], 255.f };
             //std::cout << it << ": [ " << img[it].x << " " << img[it].y << " " << img[it].z <<
             //    " ]" << std::endl;
         }
@@ -703,9 +817,15 @@ if(ParameterManager::instance().get<std::string>("colorMap.colorMap") != colorMa
     WATCH(std::string, field, method);
     WATCH(scalar, field, learningRate);
     WATCH(bool, field, clustering);
-
+static int32_t oldIndex = -1;
+auto index = ParameterManager::instance().get<int32_t>("index");
+dirty = dirty || (index != oldIndex);
     if (dirty) {
-        auto [min,max] = updateField(data);
+        oldIndex = index;
+        auto coefficients = globalCoefficients[index];
+        globalFunction = cheb::Function(std::vector<cheb::IntervalFunction>{cheb::IntervalFunction(coefficients)});
+
+        auto [min,max] = updateField(data, angularData, radialData);
         //std::cout << buff << " -> " << vMode << std::endl;
         //std::cout << "New min and max: " << min << " x " << max << std::endl;
         ParameterManager::instance().get<scalar>("field.min") = min;
@@ -714,17 +834,28 @@ if(ParameterManager::instance().get<std::string>("colorMap.colorMap") != colorMa
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, textureID);
         glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, screenWidth, screenHeight, GL_RED, GL_FLOAT, data);
+        glActiveTexture(GL_TEXTURE2);
+        glBindTexture(GL_TEXTURE_2D, radialTextureID);
+        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, screenWidth, screenHeight, GL_RED, GL_FLOAT, radialData);
+        glActiveTexture(GL_TEXTURE3);
+        glBindTexture(GL_TEXTURE_2D, angularTextureID);
+        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, screenWidth, screenHeight, GL_RED, GL_FLOAT, angularData);
         glUseProgram(0);
     }
     glUseProgram(program);
     //std::cout << textureID << " -> " << texUnit << std::endl;
     glBindVertexArray(vao);
+    glUniform1i(fracuni, ParameterManager::instance().get<std::string>("colorMap.renderMode") == "fractal" ? 1 : 0);
     glUniform1f(minUni, ParameterManager::instance().get<scalar>("field.min"));
     glUniform1f(maxUni, ParameterManager::instance().get<scalar>("field.max"));
     //GLuint samplerLocation = glGetUniformLocation(program, "colorRamp");
     //glUniform1i(samplerLocation, 0);
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, textureID);
+    glActiveTexture(GL_TEXTURE2);
+    glBindTexture(GL_TEXTURE_2D, radialTextureID);
+    glActiveTexture(GL_TEXTURE3);
+    glBindTexture(GL_TEXTURE_2D, angularTextureID);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_1D, texUnit);
     glDrawArrays(GL_TRIANGLES, 0, 6); // 2*3 indices starting at 0 -> 2 triangles
@@ -778,19 +909,23 @@ if(stringMethod == "gradientDescent")
         cheb::complex pos = cheb::complex(x,y);
         std::cout << "Starting path tracing at " << pos.real() << " + " << pos.imag() << "i\n";
         cheb::complex prior = pos;
-        for(int32_t i = 0; i < 128; ++i){
+        for(int32_t i = 0; i < 1024; ++i){
             auto fx = evalFunction(pos);
             auto dx = evalDerivative(pos);
             trace.push_back(std::make_tuple(fx, dx, pos));
             auto step = getStep(pos, prior,method,learningRate, i > 0);
             prior = pos;
-            std::cout << "\t " << i << "\t:" << pos.real() << " + " << pos.imag() << "i @ " << 
+            auto [f, J, H] = evalSquarePolynomial(pos);
+
+
+            std::cout << "\t " << i << "\t: f( " << 
+            pos.real() << " + " << pos.imag() << "i) = " << 
                     fx.real() << " + " << fx.imag() << "i / " << 
-                    dx.real() << " + " << dx.imag() << "i -> " <<
+                    dx.real() << " + " << dx.imag() << "i \t||\t" << f << " / " << J.dfdx << " : " << J.dfdy << "\t->\t" <<
                     step.real() << " + " << step.imag() << "i\n";
             pos += step;
-            if(std::abs(step) < 1e-5){
-                std::cout << "\tUpdate below threshold ( " << std::abs(fx/dx) << " ); stopping early.\n";
+            if(std::abs(step) < 1e-9 || pos != pos){
+                std::cout << "\tUpdate below threshold ( " << std::abs(step) << " ); stopping early.\n";
                 break;
             }
             // pos -= 0.1;
