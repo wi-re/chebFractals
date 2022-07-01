@@ -193,111 +193,233 @@ enum struct renderMode_t {
 
 #include <mutex>
 enum struct optimizationMethod{
-    newton, halley, gradientDescent
+    newton, halley, gradientDescent, newtonOptimizer, newtonOptimizerHessian, Adam
+};
+enum optimizationState : int32_t{
+    converged, diverged, unstable
 };
 
-auto getStep(cheb::complex location, cheb::complex prior,optimizationMethod method, cheb::scalar learningRate, bool usePrior){
-    switch(method){
-        case optimizationMethod::gradientDescent:{
+auto newtonsMethod(cheb::complex location){
+    std::vector<cheb::complex> positions, values, steps;
+    static auto& stepLimit = ParameterManager::instance().get<int32_t>("field.steps");
+    static auto& learningRatef = ParameterManager::instance().get<scalar>("field.learningRate");
+    auto learningRate = std::pow(10.,learningRatef);
+
+    for(int32_t i = 0; stepLimit == 0 ? true : i < stepLimit; ++i){      
         auto fx = evalFunction(location);
         auto dx = evalDerivative(location);
-        auto d2x = evalSecondDerivative(location);
-        // newton
+        auto step = -fx / dx;
+        positions.push_back(location);
+        values.push_back(fx);
+        steps.push_back(step);
 
-        //d2x = 2. * (fx * d2x + dx * dx);
-        //dx = 2. * fx * dx;
-        //fx = fx * fx; //fx.real() * fx.real() + fx.imag() * fx.imag();
-        if(false){
-            auto dxPrior = evalDerivative(prior);
-            auto fxPrior = evalFunction(prior);
-            dxPrior = 2. * fxPrior * dxPrior;
-
-
-            auto [fp, Jp, Hp] = evalSquarePolynomial(prior);
-            dxPrior = cheb::complex(Jp.dfdx, Jp.dfdy);
-            auto [f, J, H] = evalSquarePolynomial(location);
-            dx = cheb::complex(J.dfdx,J.dfdy);
-
-            auto posTerm = (location - prior);
-            //posTerm= cheb::complex(posTerm.real(), -posTerm.imag());
-            auto learningRate = std::abs( posTerm * (dx - dxPrior)) / ((dx - dxPrior) * (dx - dxPrior));
-            return -dx * learningRate;
-        }
-        else{
-            auto [f, J, H] = evalSquarePolynomial(location);
-            dx = cheb::complex(J.dfdx,J.dfdy);
-
-            std::complex a = H.d2fdx2;
-            std::complex b = H.d2fdxy;
-            std::complex c = H.d2fdyx;
-            std::complex d = H.d2fdy2;
-            std::complex T = a + d;
-            std::complex D = a*d-b*c;
-            std::complex l1 = T/2. + std::sqrt(T * T / 4. - D);      
-            std::complex l2 = T/2. - std::sqrt(T * T / 4. - D);      
-            auto l = std::min(l1.real(), l2.real());
-            if(l < 0.){
-                H.d2fdx2 -= l * 1.5;
-                H.d2fdy2 -= l * 1.5;
-            }
-
-            auto det = H.d2fdx2 * H.d2fdy2 - H.d2fdxy * H.d2fdyx;
-
-
-
-            Hessian H_1{ H.d2fdy2 / det, -H.d2fdxy / det, -H.d2fdyx / det, H.d2fdx2/det};
-
-            auto prodx = H_1.d2fdx2 * J.dfdx + H_1.d2fdxy * J.dfdy;
-            auto prody = H_1.d2fdyx * J.dfdx + H_1.d2fdy2 * J.dfdy;
-
-            //dx = cheb::complex(prodx, prody);
-
-            return -dx * learningRate;
-            }
-        }
-        case optimizationMethod::newton:{            
-        auto fx = evalFunction(location);
-        auto dx = evalDerivative(location);
-            // auto d2x = evalSecondDerivative(location);
-            // auto [f, J, H] = evalPolynomial(location);
-            // dx = J;
-            // fx = f;
-            return -fx / dx;
-            // return -dx / d2x;
-            // auto [f,J,H] = evalSquarePolynomial(location);
-            // auto update = f / (J.dfdx + J.dfdy);
-
-            // auto det = H.d2fdx2 * H.d2fdy2 - H.d2fdxy * H.d2fdyx;
-            // Hessian H_1{ H.d2fdy2 / det, -H.d2fdxy / det, -H.d2fdyx / det, H.d2fdx2/det};
-
-            // auto prodx = H_1.d2fdx2 * J.dfdx + H_1.d2fdxy * J.dfdy;
-            // auto prody = H_1.d2fdyx * J.dfdx + H_1.d2fdy2 * J.dfdy;
-            // return - cheb::complex(prodx, prody);
-            //return - cheb::complex(update, update);
-            //fx = f;
-            //dx = cheb::complex(J.dfdx,J.dfdy);
-        //dx = 2. * fx * dx;
-        //fx = fx * fx; //fx.real() * fx.real() + fx.imag() * fx.imag();
-        return - fx/ dx;
-        }
-        case optimizationMethod::halley:{        
-            auto fx = evalFunction(location);
-            auto dx = evalDerivative(location);
-            auto d2x = evalSecondDerivative(location);
-            auto [f, J, H] = evalPolynomial(location);
-            fx = f;
-            dx = J;
-            d2x = H;
-            //auto step = (2. * fx * dx) / (2. * dx * dx - fx *d2x);
-            // auto [f, J, H] = evalSquarePolynomial(location);
-            // fx = f;
-            // dx = cheb::complex(J.dfdx, J.dfdy);
-            // d2x = cheb::complex(H.d2fdx2,-H.d2fdxy);
-            auto step = (2. * f * dx) / (2. * dx * dx - fx *d2x);
-            return - step; 
-        }
+        if(std::abs(step) < 1e-12)
+            return std::make_tuple(optimizationState::converged, location, positions, values, steps);
+        if(location != location || step != step)
+            return std::make_tuple(optimizationState::diverged, location, positions, values, steps);
+        location += step;
     }
-};
+    return std::make_tuple(optimizationState::unstable, location, positions, values, steps);
+}
+auto newtonsMethodOptimizer(cheb::complex location){
+    std::vector<cheb::complex> positions, values, steps;
+    static auto& stepLimit = ParameterManager::instance().get<int32_t>("field.steps");
+    static auto& learningRatef = ParameterManager::instance().get<scalar>("field.learningRate");
+    auto learningRate = std::pow(10.,learningRatef);
+
+    for(int32_t i = 0; stepLimit == 0 ? true : i < stepLimit; ++i){      
+        auto [f, J, H] = evalSquarePolynomial(location);
+
+        std::complex a = H.d2fdx2;
+        std::complex b = H.d2fdxy;
+        std::complex c = H.d2fdyx;
+        std::complex d = H.d2fdy2;
+        std::complex T = a + d;
+        std::complex D = a*d-b*c;
+        std::complex l1 = T/2. + std::sqrt(T * T / 4. - D);      
+        std::complex l2 = T/2. - std::sqrt(T * T / 4. - D);      
+        auto det = H.d2fdx2 * H.d2fdy2 - H.d2fdxy * H.d2fdyx;
+
+        Hessian H_1{ H.d2fdy2 / det, -H.d2fdxy / det, -H.d2fdyx / det, H.d2fdx2/det};
+
+        auto prodx = H_1.d2fdx2 * J.dfdx + H_1.d2fdxy * J.dfdy;
+        auto prody = H_1.d2fdyx * J.dfdx + H_1.d2fdy2 * J.dfdy;
+
+        auto dx = cheb::complex(prodx, prody);
+        auto step = -dx * learningRate;
+
+        positions.push_back(location);
+        values.push_back(f);
+        steps.push_back(step);        if(std::abs(step) < 1e-12)
+            return std::make_tuple(optimizationState::converged, location, positions, values, steps);
+        if(location != location || step != step)
+            return std::make_tuple(optimizationState::diverged, location, positions, values, steps);
+        location += step;
+    }
+    return std::make_tuple(optimizationState::unstable, location, positions, values, steps);
+}
+auto newtonsMethodOptimizerHessian(cheb::complex location){
+    std::vector<cheb::complex> positions, values, steps;
+    static auto& stepLimit = ParameterManager::instance().get<int32_t>("field.steps");
+    static auto& learningRatef = ParameterManager::instance().get<scalar>("field.learningRate");
+    auto learningRate = std::pow(10.,learningRatef);
+
+    for(int32_t i = 0; stepLimit == 0 ? true : i < stepLimit; ++i){      
+        auto [f, J, H] = evalSquarePolynomial(location);
+        
+        std::complex a = H.d2fdx2;
+        std::complex b = H.d2fdxy;
+        std::complex c = H.d2fdyx;
+        std::complex d = H.d2fdy2;
+        std::complex T = a + d;
+        std::complex D = a*d-b*c;
+        std::complex l1 = T/2. + std::sqrt(T * T / 4. - D);      
+        std::complex l2 = T/2. - std::sqrt(T * T / 4. - D);         
+        auto l = std::min(l1.real(), l2.real());
+        if(l < 0.){
+            H.d2fdx2 -= l * 1.5;
+            H.d2fdy2 -= l * 1.5;
+        }
+
+        auto det = H.d2fdx2 * H.d2fdy2 - H.d2fdxy * H.d2fdyx;
+
+        Hessian H_1{ H.d2fdy2 / det, -H.d2fdxy / det, -H.d2fdyx / det, H.d2fdx2/det};
+
+        auto prodx = H_1.d2fdx2 * J.dfdx + H_1.d2fdxy * J.dfdy;
+        auto prody = H_1.d2fdyx * J.dfdx + H_1.d2fdy2 * J.dfdy;
+
+        auto dx = cheb::complex(prodx, prody);
+        auto step = -dx * learningRate;
+
+        positions.push_back(location);
+        values.push_back(f);
+        steps.push_back(step);
+                if(std::abs(step) < 1e-12)
+            return std::make_tuple(optimizationState::converged, location, positions, values, steps);
+        if(location != location || step != step)
+            return std::make_tuple(optimizationState::diverged, location, positions, values, steps);
+        location += step;
+    }
+    return std::make_tuple(optimizationState::unstable, location, positions, values, steps);
+}
+auto gradientDescent(cheb::complex location){
+    std::vector<cheb::complex> positions, values, steps;
+    static auto& stepLimit = ParameterManager::instance().get<int32_t>("field.steps");
+    static auto& learningRatef = ParameterManager::instance().get<scalar>("field.learningRate");
+    auto learningRate = std::pow(10.,learningRatef);
+
+    for(int32_t i = 0; stepLimit == 0 ? true : i < stepLimit; ++i){   
+        auto [f, J, H] = evalSquarePolynomial(location);
+
+        auto dx = cheb::complex(J.dfdx,J.dfdy);
+        // dx = cheb::complex(prodx, prody);
+
+        auto step = -dx * learningRate;
+
+
+    
+        positions.push_back(location);
+        values.push_back(f);
+        steps.push_back(step);
+               if(std::abs(step) < 1e-12)
+            return std::make_tuple(optimizationState::converged, location, positions, values, steps);
+        if(location != location || step != step)
+            return std::make_tuple(optimizationState::diverged, location, positions, values, steps);
+        location += step;
+    }
+    return std::make_tuple(optimizationState::unstable, location, positions, values, steps);
+}
+auto halleysMethod(cheb::complex location){
+    std::vector<cheb::complex> positions, values, steps;
+    static auto& stepLimit = ParameterManager::instance().get<int32_t>("field.steps");
+    static auto& learningRatef = ParameterManager::instance().get<scalar>("field.learningRate");
+    auto learningRate = std::pow(10.,learningRatef);
+
+    for(int32_t i = 0; stepLimit == 0 ? true : i < stepLimit; ++i){        
+        auto [f, J, H] = evalPolynomial(location);
+        auto step = -(2. * f * J) / (2. * J * J - f *H); 
+
+
+        positions.push_back(location);
+        values.push_back(f);
+        steps.push_back(step);
+
+               if(std::abs(step) < 1e-12)
+            return std::make_tuple(optimizationState::converged, location, positions, values, steps);
+        if(location != location || step != step)
+            return std::make_tuple(optimizationState::diverged, location, positions, values, steps);
+        location += step;
+    }
+    return std::make_tuple(optimizationState::unstable, location, positions, values, steps);
+}
+
+auto adam(cheb::complex location){
+    std::vector<cheb::complex> positions, values, steps;
+    static auto& stepLimit = ParameterManager::instance().get<int32_t>("field.steps");
+    static auto& alphaP = ParameterManager::instance().get<scalar>("adam.alpha");
+    static auto& beta1 = ParameterManager::instance().get<scalar>("adam.beta1");
+    static auto& beta2 = ParameterManager::instance().get<scalar>("adam.beta2");
+    static auto& epsP = ParameterManager::instance().get<scalar>("adam.eps");
+
+    auto alpha = std::pow(10., alphaP);
+    auto eps = std::pow(10., epsP);
+
+    auto t = 0.0;
+    auto m_x = 0.;
+    auto v_x = 0.;
+
+    auto m_y = 0.;
+    auto v_y = 0.;
+
+    for(int32_t i = 0; stepLimit == 0 ? true : i < stepLimit; ++i){   
+        auto [f, J, H] = evalSquarePolynomial(location);
+
+        t = t + 1.;
+        // get gradients
+        auto g_t = J;
+
+
+
+        m_x = beta1 * m_x + (1. - beta1) * g_t.dfdx;
+        v_x = beta2 * v_x + (1. - beta2) * g_t.dfdx * g_t.dfdx; 
+        auto m_x_corrected = m_x / (1. - std::pow(beta1, t));
+        auto v_x_corrected = v_x / (1. - std::pow(beta2, t));
+        auto step_x = - alpha * m_x_corrected / (std::sqrt(v_x_corrected) + eps);
+
+
+        m_y = beta1 * m_y + (1. - beta1) * g_t.dfdy;
+        v_y = beta2 * v_y + (1. - beta2) * g_t.dfdy * g_t.dfdy; 
+        auto m_y_corrected = m_y / (1. - std::pow(beta1, t));
+        auto v_y_corrected = v_y / (1. - std::pow(beta2, t));
+        auto step_y = - alpha * m_y_corrected / (std::sqrt(v_y_corrected) + eps);
+
+
+        auto step = cheb::complex(step_x, step_y);
+
+
+    
+        positions.push_back(location);
+        values.push_back(f);
+        steps.push_back(step);
+               if(std::abs(step) < 1e-12)
+            return std::make_tuple(optimizationState::converged, location, positions, values, steps);
+        if(location != location || step != step)
+            return std::make_tuple(optimizationState::diverged, location, positions, values, steps);
+        location += step;
+    }
+    return std::make_tuple(optimizationState::unstable, location, positions, values, steps);
+}
+auto optimize(cheb::complex location, optimizationMethod method){
+    switch(method){
+        case optimizationMethod::newton: return newtonsMethod(location);
+        case optimizationMethod::newtonOptimizer: return newtonsMethodOptimizer(location);
+        case optimizationMethod::newtonOptimizerHessian: return newtonsMethodOptimizerHessian(location);
+        case optimizationMethod::gradientDescent: return gradientDescent(location);
+        case optimizationMethod::halley: return halleysMethod(location);
+        case optimizationMethod::Adam: return adam(location);
+        default: return newtonsMethod(location);
+    }
+}
 
 std::pair<float, float> updateField(float* data, float* angular, float* radial) {
     //static std::random_device rd;
@@ -313,6 +435,12 @@ auto stringMethod = ParameterManager::instance().get<std::string>("field.method"
 optimizationMethod method = optimizationMethod::newton;
 if(stringMethod == "newton")
     method = optimizationMethod::newton;
+if(stringMethod == "newton optimizer")
+    method = optimizationMethod::newtonOptimizer;
+if(stringMethod == "newton hessian")
+    method = optimizationMethod::newtonOptimizerHessian;
+if(stringMethod == "adam")
+    method = optimizationMethod::Adam;
 if(stringMethod == "halley")
     method = optimizationMethod::halley;
 if(stringMethod == "gradientDescent")
@@ -427,12 +555,12 @@ int32_t i = 0;
         cheb::complex prior = pos;
         inputFieldData[y * nx + x] = pos;
         // newton
-        for(; i < 1024; ++i){
-            auto step = getStep(pos, prior, method,learningRate,i > 0);
-            prior = pos;
-            pos += step;
-            if(std::abs(step) < 1e-12 || pos != pos)break;
-        }
+        auto [state, location, positions, values, steps] = optimize(pos, method);
+        pos = location;
+        //auto val = std::abs(values[values.size() - 1]);
+        auto fn = evalFunction(pos);
+        auto iters = (int32_t) positions.size();
+
         auto cx = std::clamp(pos.real(), -1., 1.);
         auto cy = std::clamp(pos.imag(), -1., 1.);
 
@@ -440,8 +568,9 @@ int32_t i = 0;
 
         scalarFieldData[y * nx + x] = val;
         vectorFieldData[y * nx + x] = pos;
-        functionFieldData[y*nx + x] = evalFunction(pos);
-        iterationFieldData[y * nx + x] = i;
+        functionFieldData[y*nx + x] = fn;
+        iterationFieldData[y * nx + x] = state;
+
         // scalarFieldData[y * nx + x] = (float)std::abs(evalFunction(pos));
         if(clustering)
             scalarFieldData[y * nx + x] = std::abs(-evalFunction(pos) / evalDerivative(pos));
@@ -451,70 +580,7 @@ int32_t i = 0;
 
     auto min = *std::min_element(scalarFieldData, scalarFieldData + nx * ny);
     auto max = *std::max_element(scalarFieldData, scalarFieldData + nx * ny);
-if(mode == renderMode_t::fractal && clustering){
-    min = FLT_MAX;
-    max = -FLT_MAX;
-    scalar clusterEpsilon = 1e-2;
-    std::mutex clusterGuard;
-    bool updateClusters = false;
-    //std::vector<std::pair<cheb::complex, std::vector<cheb::complex>>> clusters;
-    #pragma omp parallel for
-    for (int32_t y = 0; y < ny; ++y) {
-        for (int32_t x = 0; x < nx; ++x) {
-            auto cur = vectorFieldData[y * nx + x];
-            auto val = std::abs(getStep(cur, cur,method,learningRate, false));
-            if(val > clusterThreshold || val != val){
-                scalarFieldData[y * nx + x] = -1.;
-                continue;
-            }
-            int32_t found = -1;
-            for(int32_t c = 0; c < clusterCenters.size(); ++ c){
-                auto pos = clusterCenters[c];
-                if(std::abs(pos - cur) < clusterEpsilon){
-                    found = c;
-                    break;
-                }
-            }
-            if(found == -1){
-                updateClusters = true;
-            }
-            else{
-                scalarFieldData[y * nx + x] = (scalar) found;
-                min = std::min(min, (float) found);
-                max = std::max(max, (float) found);
-            }
-        }
-    }
-    if(updateClusters){        
-        std::cout << "Found new Clusters, updating Cluster mapping" << std::endl;
-        for (int32_t y = 0; y < ny; ++y) {
-            for (int32_t x = 0; x < nx; ++x) {
-                auto cur = vectorFieldData[y * nx + x];
-                auto val = std::abs(getStep(cur,cur,method,learningRate, false));
-                if(val > clusterThreshold || val != val){
-                    scalarFieldData[y * nx + x] = -1.;
-                    continue;
-                }
-                int32_t found = -1;
-                for(int32_t c = 0; c < clusterCenters.size(); ++ c){
-                    auto pos = clusterCenters[c];
-                    if(std::abs(pos - cur) < clusterEpsilon){
-                        found = c;
-                        break;
-                    }
-                }
-                if(found == -1){
-                    clusterCenters.push_back(cur);
-                    found = clusterCenters.size() - 1;
-                }
-                scalarFieldData[y * nx + x] = (scalar) found;
-                // scalarFieldData[y * nx + x] = 1;
-                min = std::min(min, (float) found);
-                max = std::max(max, (float) found);
-            }
-        }
-    }
-}
+
     auto minNorm = DBL_MAX;
     auto maxNorm = 0.;
     for (int32_t y = 0; y < screenHeight; ++y) {
@@ -558,8 +624,16 @@ if(mode == renderMode_t::fractal && clustering){
             data[y * screenWidth + x] = v;
             if(mode == renderMode_t::fractal && scalarFieldData[yi * nx + xi] < -0.5)
                 data[y * screenWidth + x] = -1.;
-            if(scalarFieldData[yi * nx + xi] != scalarFieldData[yi * nx + xi])
+            if(scalarFieldData[yi * nx + xi] != scalarFieldData[yi * nx + xi] ||
+            vectorFieldData[yi * nx + xi] != vectorFieldData[yi * nx + xi]  )
                 data[y * screenWidth + x] = -1.;
+
+            if(iterationFieldData[yi * nx + xi] == optimizationState::diverged){
+                data[y * screenWidth + x] = -1.;
+            }
+            // if(iterationFieldData[yi * nx + xi] == optimizationState::unstable){
+            //     data[y * screenWidth + x] = -5.;
+            // }
         }
     }
     return std::make_pair(min, max);
@@ -616,7 +690,10 @@ void main(){
 float v = texture( renderedTexture, UV ).r;
 float rel = v;//(v - min) / (max - min);
 if(rel < -0.5){
-    color = vec3(1,0,0);
+    if(rel < -2.5)
+        color = vec3(0,1,0);
+    else
+        color = vec3(1,0,0);
     }else{
         if(fractal == 0){
         float clamped = clamp(rel, 0.0, 1.0);
@@ -810,6 +887,11 @@ if(ParameterManager::instance().get<std::string>("colorMap.colorMap") != colorMa
   WATCH(std::string, colorMap, renderMode);
   WATCH(int32_t, field, nx);
   WATCH(int32_t, field, ny);
+  WATCH(scalar, adam, alpha);
+  WATCH(scalar, adam, beta1);
+  WATCH(scalar, adam, beta2);
+  WATCH(scalar, adam, eps);
+
   WATCH(scalar, domain, xmin);
   WATCH(scalar, domain, xmax);
   WATCH(scalar, domain, ymin);
@@ -886,6 +968,10 @@ void render() {
     WATCH(double, path, x);
     WATCH(double, path, y);
     WATCH(std::string, field, method);
+  WATCH(scalar, adam, alpha);
+  WATCH(scalar, adam, beta1);
+  WATCH(scalar, adam, beta2);
+  WATCH(scalar, adam, eps);
     WATCH(scalar, field, learningRate);
     if(dirty){
         trace.clear();
@@ -903,34 +989,25 @@ if(stringMethod == "halley")
     method = optimizationMethod::halley;
 if(stringMethod == "gradientDescent")
     method = optimizationMethod::gradientDescent;
+if(stringMethod == "newton optimizer")
+    method = optimizationMethod::newtonOptimizer;
+if(stringMethod == "newton hessian")
+    method = optimizationMethod::newtonOptimizerHessian;
+if(stringMethod == "adam")
+    method = optimizationMethod::Adam;
 
 
 
         cheb::complex pos = cheb::complex(x,y);
         std::cout << "Starting path tracing at " << pos.real() << " + " << pos.imag() << "i\n";
         cheb::complex prior = pos;
-        for(int32_t i = 0; i < 1024; ++i){
-            auto fx = evalFunction(pos);
-            auto dx = evalDerivative(pos);
-            trace.push_back(std::make_tuple(fx, dx, pos));
-            auto step = getStep(pos, prior,method,learningRate, i > 0);
-            prior = pos;
-            auto [f, J, H] = evalSquarePolynomial(pos);
-
-
-            std::cout << "\t " << i << "\t: f( " << 
-            pos.real() << " + " << pos.imag() << "i) = " << 
-                    fx.real() << " + " << fx.imag() << "i / " << 
-                    dx.real() << " + " << dx.imag() << "i \t||\t" << f << " / " << J.dfdx << " : " << J.dfdy << "\t->\t" <<
-                    step.real() << " + " << step.imag() << "i\n";
-            pos += step;
-            if(std::abs(step) < 1e-9 || pos != pos){
-                std::cout << "\tUpdate below threshold ( " << std::abs(step) << " ); stopping early.\n";
-                break;
-            }
-            // pos -= 0.1;
+        auto [state, location, positions, values, steps] = optimize(pos, method);
+        for(int32_t i = 0; i < positions.size(); ++ i){
+            trace.push_back(std::make_tuple(values[i], steps[i], positions[i]));
+            printf("\t[%03d]: f(%g + %gi) = %g + %gi -> %g + %gi\n", i, positions[i].real(), positions[i].imag(), values[i].real(), values[i].imag(), steps[i].real(), steps[i].imag());
         }
-        std::cout << "Final path position : " << pos.real() << " + " << pos.imag() << std::endl;
+
+        std::cout << "Final path position : " << location.real() << " + " << location.imag() << std::endl;
     }
     auto [domainMin, domainMax] = getDomain();
     glLoadIdentity();

@@ -79,7 +79,8 @@
         "__locale": "cpp",
         "queue": "cpp",
         "stack": "cpp",
-        "ios": "cpp"
+        "ios": "cpp",
+        "__functional_base": "cpp"
     },
     "cmake.configureOnOpen": false
 }
