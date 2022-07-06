@@ -394,8 +394,8 @@ int main(int argc, char* argv[])
 
     // globalFunction = cheb::Function([](cheb::scalar x){ return std::cos(x * 13.) * sin(x * 25.);},cheb::Domain{-1.,1.});
     // globalFunction = cheb::Function(std::vector<cheb::IntervalFunction>{cheb::IntervalFunction(coefficients)});
-    // globalFunction = cheb::Function([](cheb::scalar x) { return std::tan(x); }, cheb::Domain{-1.,1.});
-    globalFunction = cheb::Function([](cheb::scalar x) { return x * x * x - 1.; }, cheb::Domain{ -1.,1. });
+    globalFunction = cheb::Function([](cheb::scalar x) { return std::tan(x); }, cheb::Domain{-1.,1.});
+    // globalFunction = cheb::Function([](cheb::scalar x) { return x * x * x - 1.; }, cheb::Domain{ -1.,1. });
     // globalFunction = cheb::Function([](cheb::scalar x) { return x * x * x - 2. * x + 2.; }, cheb::Domain{ -1.,1. });
     // globalFunction = cheb::Function([](cheb::scalar x) { return x * x * x * x * x - 1; }, cheb::Domain{ -1.,1. });
 

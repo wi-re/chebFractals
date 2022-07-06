@@ -59,6 +59,41 @@ void GUI::renderLoop() {
         glClear(GL_COLOR_BUFFER_BIT);
 
         renderFunctions();
+        {
+            if(exportFlag){
+                exportFlag = false;
+		
+        const std::chrono::time_point<std::chrono::system_clock> now =
+            std::chrono::system_clock::now();
+        const std::time_t t_c = std::chrono::system_clock::to_time_t(now);
+        auto time = std::time(nullptr);
+        std::stringstream ss;
+        char buf[256];
+        ss << std::put_time(std::localtime(&t_c), "%F_%T") 
+		<< "_" << ParameterManager::instance().get<std::string>("field.method")
+		<< ".png"; // ISO 8601 without timezone information.
+        auto s = ss.str();
+        std::replace(s.begin(), s.end(), ':', '-');
+		
+            static int32_t* buffer = new int32_t[screenWidth * screenHeight];
+            char* buffC = (char*) buffer;
+            glReadPixels(0, 0, screenWidth, screenHeight, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
+
+            static char* bufferC = new char[screenWidth * screenHeight * 3];
+            for(int32_t i = 0; i < screenWidth; i++){
+                for(int32_t j = 0; j < screenHeight; j++){
+                    bufferC[(i + screenWidth * ( screenHeight -j - 1))*3 + 0] = buffC[(i + screenWidth * j ) * 4 + 0];
+                    bufferC[(i + screenWidth * ( screenHeight -j - 1))*3 + 1] = buffC[(i + screenWidth * j ) * 4 + 1];
+                    bufferC[(i + screenWidth * ( screenHeight -j - 1))*3 + 2] = buffC[(i + screenWidth * j ) * 4 + 2];
+                }
+            }
+
+
+if (!stbi_write_png(s.c_str(), screenWidth, screenHeight,3, bufferC, screenWidth*3)) {
+  std::cerr << "ERROR: could not write image to " << s << std::endl;
+}
+            }
+        }
 
 #define WATCH(type, ns, id)\
   static type id = ParameterManager::instance().get<type>(std::string(#ns) +"." + #id);\

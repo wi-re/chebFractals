@@ -48,34 +48,41 @@ void initializeParameters(int32_t scene) {
     ParameterManager::instance().newParameter("path.y", 0., { .constant = false ,.range = genRange(-1.,1.)});
     ParameterManager::instance().newParameter("path.display", true, { .constant = false });
 
-    ParameterManager::instance().newParameter("domain.xmin", -1., { .constant = false ,.range = genRange(-10.,10.) });
-    ParameterManager::instance().newParameter("domain.xmax", 1., { .constant = false ,.range = genRange(-10.,10.) });
+    // ParameterManager::instance().newParameter("domain.xmin", -1., { .constant = false ,.range = genRange(-10.,10.) });
+    // ParameterManager::instance().newParameter("domain.xmax", 1., { .constant = false ,.range = genRange(-10.,10.) });
+    ParameterManager::instance().newParameter("domain.xmin", -16./9., { .constant = false ,.range = genRange(-10.,10.) });
+    ParameterManager::instance().newParameter("domain.xmax", 16./9., { .constant = false ,.range = genRange(-10.,10.) });
     ParameterManager::instance().newParameter("domain.ymin", -1., { .constant = false ,.range = genRange(-10.,10.) });
     ParameterManager::instance().newParameter("domain.ymax", 1., { .constant = false ,.range = genRange(-10.,10.) });
 
-    ParameterManager::instance().newParameter("field.steps", 512, { .constant = false , .range = genRange(0,512) });
+    ParameterManager::instance().newParameter("field.steps", 8192, { .constant = false , .range = genRange(0,512) });
 
     ParameterManager::instance().newParameter("field.render", false, { .constant = false });
-    ParameterManager::instance().newParameter("field.nx", 512, { .constant = false , .range = genRange(1,512) });
-    ParameterManager::instance().newParameter("field.ny", 512, { .constant = false, .range = genRange(1,512) });
+    ParameterManager::instance().newParameter("field.nx", 256, { .constant = false , .range = genRange(1,512) });
+    ParameterManager::instance().newParameter("field.ny", 256, { .constant = false, .range = genRange(1,512) });
     ParameterManager::instance().newParameter("field.h", 1.0, { .constant = false, .range = genRange(0.01,10.0) });
     ParameterManager::instance().newParameter("field.min", 0.0, { .constant = false , .range = genRange(-10.0,10.0) });
     ParameterManager::instance().newParameter("field.max", 1.0, { .constant = false, .range = genRange(-10.0,10.0) });
-    ParameterManager::instance().newParameter("field.learningRate", -4.0, { .constant = false, .range = genRange(-8.0,8.0) });
+    ParameterManager::instance().newParameter("field.learningRate", -3.0, { .constant = false, .range = genRange(-8.0,8.0) });
     
     ParameterManager::instance().newParameter("adam.alpha", -3.0, { .constant = false, .range = genRange(-8.0,0.0) });
     ParameterManager::instance().newParameter("adam.beta1", 0.9, { .constant = false, .range = genRange(.0,1.0) });
     ParameterManager::instance().newParameter("adam.beta2", 0.999, { .constant = false, .range = genRange(.0,1.0) });
     ParameterManager::instance().newParameter("adam.eps", -8.0, { .constant = false, .range = genRange(-8.0,0.0) });
     
-
+    ParameterManager::instance().newParameter("BFGS.c1", 1e-4, { .constant = false, .range = genRange(.0,1.0) });
+    ParameterManager::instance().newParameter("BFGS.c2", 0.999, { .constant = false, .range = genRange(.0,1.0) });
+    ParameterManager::instance().newParameter("BFGS.alpha", 1., { .constant = false, .range = genRange(1e-4,1.0) });
+     ParameterManager::instance().newParameter("BFGS.eps", -8.0, { .constant = false, .range = genRange(-8.0,0.0) });
+    
 
     ParameterManager::instance().newParameter("colorMap.min", scalar(0.99), { .constant = false , .range = genRange(-10.0,10.0) });
     ParameterManager::instance().newParameter("colorMap.max", scalar(1.03), { .constant = false , .range = genRange(-10.0,10.0) });
     ParameterManager::instance().newParameter("colorMap.auto", true, { .constant = false });
     ParameterManager::instance().newParameter("field.clusterEpsilon", -2., { .constant = false,.range = genRange(-10.,1.) });
- ParameterManager::instance().newParameter("field.threshold", -2., { .constant = false,.range = genRange(-10.,1.) });
-ParameterManager::instance().newParameter("field.clustering", false, { .constant = false });
+    ParameterManager::instance().newParameter("field.threshold", -2., { .constant = false,.range = genRange(-10.,1.) });
+    ParameterManager::instance().newParameter("field.clustering", false, { .constant = false });
+    ParameterManager::instance().newParameter("field.cycles", false, { .constant = false });
     static auto methods = std::vector<detail::iAny>{
             std::string("newton"),
             std::string("newton optimizer"),

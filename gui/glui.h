@@ -256,7 +256,7 @@ class GUI {
 	bool show_log_window = true;
 	GLFWwindow* window;
 	ImVec4 clear_color;
-
+bool exportFlag = false;
 	bool m_showText = true;
     bool m_showInfo = true;
     vec m_cursorPosition;

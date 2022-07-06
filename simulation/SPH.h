@@ -38,8 +38,12 @@ void initRender();
 // converts a std::chrono duration to a millisecond value
 scalar toMs(clk::duration dur);
 
-inline int32_t screenWidth = 2048;
-inline int32_t screenHeight = 2048;
+// inline int32_t screenWidth = 2048;
+// inline int32_t screenHeight = 2048;
+
+inline int32_t screenWidth = 3840;
+inline int32_t screenHeight = 2160;
+
 
 inline float* scalarFieldData = nullptr;
 inline float* angularFieldData = nullptr;

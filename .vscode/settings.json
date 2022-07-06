@@ -80,7 +80,8 @@
         "queue": "cpp",
         "stack": "cpp",
         "ios": "cpp",
-        "__functional_base": "cpp"
+        "__functional_base": "cpp",
+        "filesystem": "cpp"
     },
     "cmake.configureOnOpen": false
 }

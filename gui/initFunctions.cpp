@@ -21,10 +21,12 @@ void GUI::initGL() {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_COMPAT_PROFILE);
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+    glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+
     window = glfwCreateWindow(screenWidth, screenHeight, "OmniFlow", NULL, NULL);
     if (window == NULL)
         throw std::runtime_error("Could not setup window");
-    glfwSetWindowPos(window, 5, 35);
+    glfwSetWindowPos(window, 40, 50);
     glfwMakeContextCurrent(window);
     glfwSwapInterval(1);
     bool err = gladLoadGL() == 0;
