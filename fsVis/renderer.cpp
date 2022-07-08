@@ -839,44 +839,44 @@ void render() {
   WATCH(scalar, adam, beta2);
   WATCH(scalar, adam, eps);
   WATCH(scalar, field, learningRate);
-  if (dirty) {
-    trace.clear();
+  // if (dirty) {
+  //   trace.clear();
 
-    once = false;
-    auto x = ParameterManager::instance().get<scalar>("path.x");
-    auto y = ParameterManager::instance().get<scalar>("path.y");
+  //   once = false;
+  //   auto x = ParameterManager::instance().get<scalar>("path.x");
+  //   auto y = ParameterManager::instance().get<scalar>("path.y");
 
-    auto learningRate = std::pow(10., ParameterManager::instance().get<scalar>("field.learningRate"));
-    auto stringMethod = ParameterManager::instance().get<std::string>("field.method");
-    optimizationMethod method = getMethod(stringMethod);
+  //   auto learningRate = std::pow(10., ParameterManager::instance().get<scalar>("field.learningRate"));
+  //   auto stringMethod = ParameterManager::instance().get<std::string>("field.method");
+  //   optimizationMethod method = getMethod(stringMethod);
 
-    cheb::complex pos = cheb::complex(x, y);
-    std::cout << "Starting path tracing at " << pos.real() << " + " << pos.imag() << "i\n";
-    cheb::complex prior = pos;
-    auto [state, location, positions, values, steps] = optimize(pos, method);
-    // auto [state, location, positions, values, steps] = BFGS(pos);
-    for (int32_t i = 0; i < positions.size(); ++i) {
-      trace.push_back(std::make_tuple(values[i], steps[i], positions[i]));
-      printf("\t[%03d]: f(%g + %gi) = %g + %gi -> %g + %gi\n", i, positions[i].real(), positions[i].imag(), values[i].real(), values[i].imag(), steps[i].real(), steps[i].imag());
-    }
+  //   cheb::complex pos = cheb::complex(x, y);
+  //   std::cout << "Starting path tracing at " << pos.real() << " + " << pos.imag() << "i\n";
+  //   cheb::complex prior = pos;
+  //   auto [state, location, positions, values, steps] = optimize(pos, method);
+  //   // auto [state, location, positions, values, steps] = BFGS(pos);
+  //   for (int32_t i = 0; i < positions.size(); ++i) {
+  //     trace.push_back(std::make_tuple(values[i], steps[i], positions[i]));
+  //     printf("\t[%03d]: f(%g + %gi) = %g + %gi -> %g + %gi\n", i, positions[i].real(), positions[i].imag(), values[i].real(), values[i].imag(), steps[i].real(), steps[i].imag());
+  //   }
 
-    std::cout << "Final path position : " << location.real() << " + " << location.imag() << std::endl;
-  }
-  auto [domainMin, domainMax] = getDomain();
-  glLoadIdentity();
-  glUseProgram(0);
+  //   std::cout << "Final path position : " << location.real() << " + " << location.imag() << std::endl;
+  // }
+  // auto [domainMin, domainMax] = getDomain();
+  // glLoadIdentity();
+  // glUseProgram(0);
 
-  glOrtho(domainMin.x(), domainMax.x(), domainMin.y(), domainMax.y(), 0, 1);
-  // glOrtho(domainMin.x(), domainMax.x(), domainMax.y(), domainMin.y(), 0, 1);
-  glBegin(GL_LINES);
-  for (int32_t i = 0; i < trace.size() - 1; ++i) {
-    auto [fxl, dxl, pl] = trace[i];
-    auto [fxr, dxr, pr] = trace[i + 1];
-    glVertex2f(pl.real(), pl.imag());
-    glVertex2f(pr.real(), pr.imag());
-  }
+  // glOrtho(domainMin.x(), domainMax.x(), domainMin.y(), domainMax.y(), 0, 1);
+  // // glOrtho(domainMin.x(), domainMax.x(), domainMax.y(), domainMin.y(), 0, 1);
+  // glBegin(GL_LINES);
+  // for (int32_t i = 0; i < trace.size() - 1; ++i) {
+  //   auto [fxl, dxl, pl] = trace[i];
+  //   auto [fxr, dxr, pr] = trace[i + 1];
+  //   glVertex2f(pl.real(), pl.imag());
+  //   glVertex2f(pr.real(), pr.imag());
+  // }
 
-  glEnd();
+  // glEnd();
 
   glColor4f(0.8f, 0.f, 0.f, 1);
 }

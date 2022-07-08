@@ -8,6 +8,7 @@
 #include <fstream>
 #include <filesystem>
 
+
 int main(int argc, char* argv[]) 
 {
     // f(x) = cos(13x) * sin(25x)
@@ -59,8 +60,10 @@ int main(int argc, char* argv[])
     globalCoefficients.push_back({0x1.2d68d860a1dfap+3, -0x1.d2fcf66941e4ap-1, -0x1.26094d5cca5ecp-1, -0x1.03a4799511c02p-2, -0x1.9957f994885f9p-4, -0x1.469660f91d278p-5, -0x1.08209d8a36004p-6, -0x1.b04a08e216b38p-8, -0x1.653ce3a2ef52p-9, -0x1.299f7d9c1b3bcp-10, -0x1.f34a698d89781p-12, -0x1.a536869b92ep-13, -0x1.65173d65b7adap-14, -0x1.3003729395a3ap-15, -0x1.03c7fd9ecf651p-16, -0x1.bd68b898b7187p-18, -0x1.7eef6f914bef7p-19, -0x1.4a1105d690058p-20, -0x1.1d264716c4352p-21, -0x1.edb5915d27abp-23, -0x1.ac34dbc8b524p-24, -0x1.7407320cf22p-25, -0x1.43b96e7b966p-26, -0x1.1a187f905p-27, -0x1.ec49ed5d3p-29, -0x1.ae12ba688p-30, -0x1.782516ccp-31, -0x1.49532eep-32, -0x1.209d4c2p-33, -0x1.fa5656p-35, -0x1.bc892ep-36, -0x1.869a68p-37, -0x1.578p-38, -0x1.2e387p-39, -0x1.0a246p-40, -0x1.d4828p-42, -0x1.9d76p-43, -0x1.6b498p-44, -0x1.3c858p-45});
     // Test function 1487127
     globalCoefficients.push_back({0x1.abc42004e3953p+0, 0x1.bbb01fbcaefa2p+1, 0x1.082a9fd68def4p+2, 0x1.738ef1c2e6747p-13, -0x1.a146d43740c54p-16, -0x1.2bef0c399955ep-18, -0x1.28b4ace759101p-21, -0x1.07f708eadab4p-24, -0x1.c133d6aee3199p-28, -0x1.75db6b631131p-31, -0x1.336eb9aa5f8p-34, -0x1.f625322538p-38, -0x1.98210188p-41, -0x1.48e4a18p-44});
+    // Test function 340364
+    globalCoefficients.push_back({0x1.f01aa39e426a3p+3, 0x1.3ff214b721929p+0, 0x1.ac64c6cd3146ep-8, -0x1.35c6645efb989p-7, -0x1.92dc57b26c46p-10, -0x1.0148c36d813d8p-12, -0x1.48d7f200a2592p-15, -0x1.a65e3f47e7236p-18, -0x1.10c693bc82e38p-20, -0x1.623ac47d5548p-23, -0x1.ce4079fbbd5p-26, -0x1.2eead8bf1p-28, -0x1.8e88d28d4p-31, -0x1.070f8c84p-33, -0x1.5c53d5p-36, -0x1.ce968p-39, -0x1.34p-41, -0x1.a114p-44});
 
-    std::cout << "Coefficient count: " << globalFunction.funs[0].coeffs().size() << std::endl;
+    // std::cout << "Coefficient count: " << globalFunction.funs[0].coeffs().size() << std::endl;
 
     auto& gui = GUI::instance();
     gui.render_lock.lock();

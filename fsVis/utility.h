@@ -19,8 +19,8 @@ struct v4 {
   float x, y, z, w;
 };
 
-inline int32_t screenWidth = 1920;
-inline int32_t screenHeight = 1080;
+inline int32_t screenWidth = 3840;
+inline int32_t screenHeight = 2160;
 constexpr inline scalar epsilon((scalar)1e-7);
 
 void initializeParameters();
