@@ -3,7 +3,6 @@
 #error This file is an internal header and should not be included directly. Please include <cheb/cheb.h> instead.
 #endif
 #include <cheb/cheb.h>
-//#include <boost/multiprecision/mpfr.hpp>
 
 namespace sturm {
 	struct SturmSequence {
@@ -21,11 +20,7 @@ namespace sturm {
 
 		bool potentialProblem = false;
 
-		//using scalarHighPrecision = boost::multiprecision::mpfr_float_50;
-
 		int32_t trimseq(scalar* seq, int32_t n, double l);
-		//#define USE_HIGH_PRECISION
-#ifndef USE_HIGH_PRECISION
 		void writeZSeries(scalar* in, int32_t n, scalar* out);
 		int32_t zseries_div(scalar* z1, int32_t lc1, scalar* z2, int32_t lc2, scalar* z3);
 		int32_t chebdiv(scalar* z1, int32_t lc1, scalar* z2, int32_t lc2, scalar* z3);
@@ -35,14 +30,6 @@ namespace sturm {
 		void symmetrize(scalar* z, int32_t n);
 		void setDegreeWithZseries(std::size_t rank, scalar* zs, int32_t len);
 		void generateSequence();
-#else
-	void writeZSeries(scalar* in, int32_t n, scalarHighPrecision* out);
-	int32_t zseries_div(scalarHighPrecision* z1, int32_t lc1, scalarHighPrecision* z2, int32_t lc2, scalarHighPrecision* z3);
-	int32_t chebdiv(scalarHighPrecision* z1, int32_t lc1, scalarHighPrecision* z2, int32_t lc2, scalarHighPrecision* z3);
-		void symmetrize(scalarHighPrecision* z, int32_t n);
-		void setDegreeWithZseries(std::size_t rank, scalarHighPrecision* zs, int32_t len);
-		void generateSequence();
-#endif
 		void generateDerivative();
 		void diffTerm(const cheb::svec& polyNomial);
 		static cheb::svec differentiate(const cheb::svec& polyNomial);

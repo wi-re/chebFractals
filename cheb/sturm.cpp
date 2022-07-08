@@ -8,7 +8,6 @@
 #include <mutex>
 #include <cstring>
 #include <cfloat>
-//#include <boost/multiprecision/mpfr.hpp>
 
 namespace sturm {
 

@@ -1,480 +1,66 @@
-#include <tools/exceptionHandling.h>
 #include "gui/glui.h"
 #include <sstream>
 #include <thread>
-//#include <windows.h>
 #include <iostream> 
-
-// BOOL CtrlHandler(DWORD fdwCtrlType) {
-//     std::clog << "Caught signal " << fdwCtrlType << std::endl;
-//     switch (fdwCtrlType)
-//     {
-//     case CTRL_CLOSE_EVENT:
-//         GUI::instance().quit();
-//         GUI::instance().render_lock.unlock();
-//         std::this_thread::sleep_for(std::chrono::milliseconds(2000));
-//         return(TRUE);
-
-//     default:
-//         return FALSE;
-//     }
-// }
-#include <test.h>
-#include <simulation/2DMath.h>
 #include <cheb/cheb.h>
 #include <iomanip>
-
-
-struct progressBar {
-    std::chrono::high_resolution_clock::time_point start, lastTime;
-    int32_t frames, lastFrame = 0;
-
-    progressBar(int32_t targetFrames) :frames(targetFrames) {
-        start = std::chrono::high_resolution_clock::now();
-    };
-
-    void update(int32_t current, int32_t updateRate) {
-        std::ios cout_state(nullptr);
-        cout_state.copyfmt(std::cout);
-        if (current >= lastFrame + updateRate) {
-            auto progress = ((double)current) / ((double)frames);
-            auto now = std::chrono::high_resolution_clock::now();
-            lastTime = now;
-            int barWidth = 70;
-            std::cout << "Rendering " << std::setw(4) << current;
-            if (frames != -1)
-                std::cout << "/" << std::setw(4) << frames;
-            std::cout << " [";
-            int pos = barWidth * progress;
-            for (int i = 0; i < barWidth; ++i) {
-                if (i < pos)
-                    std::cout << "=";
-                else if (i == pos)
-                    std::cout << ">";
-                else
-                    std::cout << " ";
-            }
-            std::cout << "] " << std::setw(3) << int(progress * 100.0) << " ";
-            auto dur = std::chrono::duration_cast<std::chrono::milliseconds>(now - start);
-            if (dur.count() < 100 || progress < 1e-3f) {
-                std::cout << " ---/---s  ";
-            }
-            else {
-                auto totalTime =
-                    ((float)std::chrono::duration_cast<std::chrono::microseconds>(now - start).count()) / 1000.f / 1000.f;
-                std::cout << std::fixed << std::setprecision(0) << " " << std::setw(3) << totalTime << "/" << std::setw(3)
-                    << (totalTime / progress) << "s  ";
-            }
-
-
-        }
-        std::cout << "\r";
-        std::cout.flush();
-        std::cout.copyfmt(cout_state);
-    }
-    void update(int32_t x, int32_t y, int32_t updateRate) {
-        std::ios cout_state(nullptr);
-        cout_state.copyfmt(std::cout);
-        int32_t current = x + y * 1920;
-        if (current >= lastFrame + updateRate) {
-            auto progress = ((double)current) / ((double)frames);
-            auto now = std::chrono::high_resolution_clock::now();
-            lastTime = now;
-            int barWidth = 70;
-            std::cout << "Rendering " << std::setw(5) << x << std::setw(5) << y;
-            if (frames != -1)
-                std::cout << "/" << std::setw(5) << 1920 << std::setw(5) << 1080;
-            std::cout << " [";
-            int pos = barWidth * progress;
-            for (int i = 0; i < barWidth; ++i) {
-                if (i < pos)
-                    std::cout << "=";
-                else if (i == pos)
-                    std::cout << ">";
-                else
-                    std::cout << " ";
-            }
-            std::cout << "] " << std::setw(3) << int(progress * 100.0) << " ";
-            auto dur = std::chrono::duration_cast<std::chrono::milliseconds>(now - start);
-            if (dur.count() < 100 || progress < 1e-3f) {
-                std::cout << " ---/---s  ";
-            }
-            else {
-                auto totalTime =
-                    ((float)std::chrono::duration_cast<std::chrono::microseconds>(now - start).count()) / 1000.f / 1000.f;
-                std::cout << std::fixed << std::setprecision(0) << " " << std::setw(3) << totalTime << "/" << std::setw(3)
-                    << (totalTime / progress) << "s  ";
-            }
-
-
-        }
-        std::cout << "\r";
-        std::cout.flush();
-        std::cout.copyfmt(cout_state);
-    }
-    void end() {
-        std::cout << std::endl;
-    }
-};
 #include <vector>
 #include <fstream>
 #include <filesystem>
 
-std::vector<std::vector<double>> chebyshevData(std::string file) {
-    
-constexpr std::size_t width = 1920, height = 1080;
-
-struct float4 { float x, y, z, w; };
-struct double3 { double x, y, z; };
-struct float3 { float x, y, z; };
-struct int3 { int32_t x, y, z; };
-
-struct Matrix4x4d {
-    double data[4 * 4] = {
-        0., 0., 0., 0., 0., 0., 0., 0.,
-        0., 0., 0., 0., 0., 0., 0., 0. };
-};
-
-struct isoFunctionState {
-    // iso function information
-    double(*isoFunctionA)(double, double, double);  // function pointer to first iso function (A)
-    double(*isoFunctionB)(double, double, double);  // function pointer to second iso function (B)
-    Matrix4x4d matrixA =                            // transformation matrix applied to isofunction A
-    { 1.,0.,0.,0.,
-     0.,1.,0.,0.,
-     0.,0.,1.,0.,
-     0.,0.,0.,1. };
-    Matrix4x4d matrixB =                            // transformation matrix applied to isofunction B
-    { 1.,0.,0.,0.,
-     0.,1.,0.,0.,
-     0.,0.,1.,0.,
-     0.,0.,0.,1. };
-    // blending and isosurface parameters
-    // The next parameter describes the blend mode to use when evaluating the scalar field with:
-    // blendmode =  0 : A
-    // blendmode =  1 : B
-    // blendmode =  2 : A + B
-    // blendmode =  3 : A - B
-    // blendmode =  4 : A * B + blendBias
-    // blendmode =  5 : 0.5 ( A + B - sqrt(A^2 + B^2))
-    // blendmode =  6 : 0.5 ( A + B + sqrt(A^2 + B^2))
-    // blendmode =  7 : A / B
-    // blendmode =  8 : blendParameter * A + (1 - blendParameter) * B
-    // blendmode =  9 : max(A,B)
-    // blendmode = 10 : min(A,B)
-    // blendmode = 11 : - blendA0 / (1 + A^2 / blendA1 + B^2 / blendA2)
-    int32_t blendMode = 0;
-    double blendParameter = 0.5;                    // linear blend weight for blendmode 8
-    double blendBias = 0.01;                        // bias parameter for multiplying isosurfaces for blendmode 4
-    double blendA0 = 0.019;                         // parameter for blendmode 11
-    double blendA1 = 0.589;                         // parameter for blendmode 11
-    double blendA2 = 0.943;                         // parameter for blendmode 11
-    double isoLevel = 0.0;                          // offset value applied to any evaluated isofunction, set to negative for blendmode 11
-
-    // gradient settings
-    int32_t diffScheme = 0;                         // flag to pick gradient scheme: 0 is central finite, 1 is forward finite, 3 is chebyshev
-    int32_t order = 2;                              // order for finite difference schemes (2,4,6,8 for central; 1,2,3,4,5,6 for forward)
-    bool autoScale = true;                          // automatically scale step width for x as h = sqrt(x_+ - x)
-    double h = DBL_EPSILON;                         // manual step width for finite differences
-    // sturm sequence settings
-    int32_t splitDegree = 50;                       // degree at which proxy functions should be split for computational efficiency
-    bool useQSeries = false;                        // utilize quotient based sturm sequences instead of remainder based
-    double thresholdA = 12.0;                       // numerical precision threshold during sturm sequence construction
-    double thresholdB = 500.0;                      // numerical precision threshold during sturm sequence construction
-    // domain settings
-    float3 minDomain = float3{ -1.5f, -1.5f, -1.5f }; // minimum of AABB surrounding the isofunction
-    float3 maxDomain = float3{ 1.5f,  1.5f,  1.5f }; // maximum of AABB surrounding the isofunction
-    // general settings
-    int32_t chebyshevMethod = 0;                    // 0 for sturm sequence based and 1 for qr-based root finding
-    bool offsetErrors = false;                      // determine finite step errors, WARNING: very slow
-    bool lipschitz = false;                         // evaluate approximate finite lipschitz constant of isofunction, WARNING: slow
-    // numerical settings
-    bool highPrecisionMode = false;                 // utilize high precision shifting mode as described in the paper
-    double lowPrecisionEpsilon = 1.;                // epsilon factor for the second proxy in high precision mode
-    double highPrecisionEpsilon = 7.;               // epsilon factor for the initial proxy in high precision mode
-    bool polishRoots = true;                        // polish roots using Newton iterations
-    int32_t newtonLimit = 16;                       // maximum number of Newton iterations that should be performed
-    // misc settings
-    int32_t breakPoint = 2;                         // value to shift function by based on approximation errors (with factor 10^breakpoint)
-
-    int32_t intersectionMethod = 1;
-
-    // sphere and segment tracing parameters
-    int32_t maximumIterations = -1;
-    bool autoLipschitz = true;
-    double globalLipschitz = 1.0;
-    double segmentAmplification = 1.0;
-    double sstThreshold = -5.0;
-
-    // Sherstyuk parameters
-    int32_t subIntervalCount = 2;
-
-    // AMP Parameters
-    int32_t AMPIntervalCount = 4;
-    double tau1 = 1e-3;
-    double tau2 = 1e-1;
-    double tau3 = 1e-1;
-    double AMPepsilon = 1e-12;
-    bool useTaylorTest = false;
-
-};
-struct isoFunctionStatistics {
-    double3 origin;
-    double3 direction;
-    int32_t rayIndex;
-    // hit information
-    bool intersectedAABB = false;                   // indicates if the scalar field bounding box was intersected
-    bool intersectedSurface = false;                // indicates if the actual isosurface was intersected
-    double depth = 0.0;                             // distance value for which the isosurface was intersected
-    // chebyshev information
-    int32_t degree = 0;                             // degree of base-proxy function
-    double minCoeff = 0.0;                          // minimum coefficient of base-proxy function
-    double maxCoeff = 0.0;                          // maximum coefficient of base-proxy function
-    //std::vector<double> coefficients;               // vector containing all coefficients of base-proxy function
-    // proxy information (not always defined)
-    bool hasLipschitzInformation = false;
-    double fmin, fmax;                              // approximate minimum and maximum function value using base-proxy
-    double gmin, gmax;                              // approximate minimum and maximum function derivative value using base-proxy
-    // proxy information (always defined)
-    double epsilon_a = 0.;                          // degree^2 based approximation error
-    double epsilon_u = 0.;                          // cheb::eps based approximation error
-    double value = 0.;                              // value that isofunction was shifted by based on approximation errors
-    // error information (not always defined)
-    bool hasIntegerErrors = false;
-    int32_t error = 0;                              // error in finite precision steps on the actual function
-    int32_t errorP = 0;                             // error in finite precision steps on the proxy function
-    // error information based on function
-    double ferror = 0.;                             // result of evaluating actual function at approximate intersection
-    double ferrorp = 0.;                            // result of evaluating proxy function at approximate intersection
-    // timing information
-    double timeForProxy = 0.0;                      // time to construct proxy for the given ray in ms
-    double timeForRootFinding = 0.0;                // time to find roots on proxy function
-    // surface information
-    double3 gradients{ 0.,0.,0. };                  // approximate gradients of scalar field at intersection
-    // Chebyshev Surfaces
-    int32_t numRoots = 0;                           // approximate number of roots along ray, only accurate without subdivisions & high precision
-
-    // sphere tracing
-    int64_t sphereTracingIterations;
-    double sphereTracingStep;
-    // segment tracing
-    int32_t segmentTracingIterations;
-    double segmentTracingStep;
-    double localLipschitzConstant;
-    // LG Surfaces
-    int32_t LGdepth;
-    int32_t RFdepth;
-    double localLConstant;
-    double localGConstant;
-    // AMP 09
-    int32_t AMPIterations;
-    double AMPStep;
-    double AMPWidth;
-    // Sherstyuk
-    int32_t SherstyukIterations;
-    std::tuple<double, double, double, double, double, double> SherstyukCoefficients;
-    // misc information
-    bool hasRankInformation = false;
-    int3 ranks{ 0,0,0 };                            // if chebyshev gradients were used this contains the degrees of the gradient functions
-};
-
-
-        std::cout << "Reading from " << file << std::endl;
-        std::ifstream in;
-        in.open(file, std::ios::binary);
-        if (!in.is_open()) { std::cerr << "Could not open file!" << std::endl; throw std::invalid_argument{ "File does not exist" }; }
-
-        std::size_t bufferSize = std::max(sizeof(isoFunctionState), sizeof(isoFunctionStatistics));
-        std::byte* buffer = new std::byte[bufferSize + 1];
-        std::size_t numCoeffs = 0;
-        in.read((char*)buffer, sizeof(isoFunctionState));
-        //std::cout << sizeof(isoFunctionState) << "\t" << sizeof isoFunctionStatistics << std::endl;
-
-        auto state = *reinterpret_cast<isoFunctionState*>(buffer);
-        std::vector<std::vector<double>> coefficients;
-        std::vector<isoFunctionStatistics> data;
-        data.resize(width * height);
-        if (state.intersectionMethod == 1 && state.chebyshevMethod == 1) {
-            coefficients.resize(width * height);
-        }
-        auto pb = progressBar(width * height);
-       // std::atomic<int32_t> i = 0;
-        for (int32_t x = 0; x < width; ++x) {
-            for (int32_t y = 0; y < height; ++y) {
-                //pb.update(x, y, 1);
-                //pb.update(++i, width);
-                in.read((char*)buffer, sizeof(isoFunctionStatistics));
-                //std::cout << numCoeffs << std::endl;
-                isoFunctionStatistics& pixelStats = *reinterpret_cast<isoFunctionStatistics*>(buffer);
-                //std::cout << pixelStats.rayIndex << "\t";
-                //std::cout << numCoeffs << std::endl;
-                //std::cout << numCoeffs << std::endl;
-                auto tempBuff = new std::vector<double>();
-                //memcpy((char*) &pixelStats.coefficients, (char*) tempBuff, sizeof(*tempBuff));
-                if (state.intersectionMethod == 1 && state.chebyshevMethod == 1) {
-                    in.read((char*)&numCoeffs, sizeof(numCoeffs));
-                    auto localCoefficients = std::vector<double>();
-                    localCoefficients.resize(numCoeffs);
-                    if (numCoeffs > 0)
-                        in.read((char*)localCoefficients.data(), sizeof(double) * numCoeffs);
-                    coefficients[pixelStats.rayIndex] = localCoefficients;
-                }
-                else {
-                    //pixelStats.coefficients = std::vector<double>();
-                }
-                auto i = (height - y - 1) * width + x;
-                data[i] = pixelStats;
-            }
-        }
-
-
-    return coefficients;
-}
-
-
-	struct complexState{
-		FunctionState r, i;
-	};
-	complexState deriv(cheb::complex val, const cheb::svec& ak) {
-		if (ak.size() == 0)
-			return complexState{};
-		if (ak.size() == 1)
-			return complexState{.r = FunctionState{.f = ak[0]}};
-
-		std::vector<complexState> b(ak.size() + 2);
-		auto x = val.real();
-		auto y = val.imag();
-
-
-		for (int32_t k = (int32_t)ak.size() - 1; k >= 0; k -= 1) {	
-			auto s = k == 0 ? 1. : 2.;
-
-
-			b[k].r.f        = ak[k] - b[k+2].r.f        + s * (x * b[k+1].r.f                                            - y * b[k+1].i.f);
-
-			b[k].r.J.dfdx   =       - b[k+2].r.J.dfdx   + s * (x * b[k+1].r.J.dfdx                     + b[k+1].r.f      - y * b[k+1].i.J.dfdx);
-
-			b[k].r.H.d2fdx2 =       - b[k+2].r.H.d2fdx2 + s * (x * b[k+1].r.H.d2fdx2 + b[k+1].r.J.dfdx + b[k+1].r.J.dfdx - y * b[k+1].i.H.d2fdx2);
-			b[k].r.H.d2fdxy =       - b[k+2].r.H.d2fdxy + s * (x * b[k+1].r.H.d2fdxy + b[k+1].r.J.dfdy                   - y * b[k+1].i.H.d2fdxy - b[k+1].i.J.dfdx);
-
-			b[k].r.J.dfdy   =       - b[k+2].r.J.dfdy   + s * (x * b[k+1].r.J.dfdy                                       - y * b[k+1].i.J.dfdy - b[k+1].i.f);
-
-			b[k].r.H.d2fdyx =       - b[k+2].r.H.d2fdyx + s * (x * b[k+1].r.H.d2fdyx + b[k+1].r.J.dfdy                   - y * b[k+1].i.H.d2fdyx - b[k+1].i.J.dfdx);
-			b[k].r.H.d2fdy2 =       - b[k+2].r.H.d2fdy2 + s * (x * b[k+1].r.H.d2fdy2                                     - y * b[k+1].i.H.d2fdy2 - b[k+1].i.J.dfdy - b[k+1].i.J.dfdy);
-
-			b[k].i.f        =       - b[k+2].i.f        + s * (x * b[k+1].i.f                                            + y * b[k+1].r.f);
-
-			b[k].i.J.dfdx   =       - b[k+2].i.J.dfdx   + s * (x * b[k+1].i.J.dfdx                     + b[k+1].i.f      + y * b[k+1].r.J.dfdx);
-
-			b[k].i.H.d2fdx2 =       - b[k+2].i.H.d2fdx2 + s * (x * b[k+1].i.H.d2fdx2 + b[k+1].i.J.dfdx + b[k+1].i.J.dfdx + y * b[k+1].r.H.d2fdx2);
-			b[k].i.H.d2fdxy =       - b[k+2].i.H.d2fdxy + s * (x * b[k+1].i.H.d2fdxy + b[k+1].i.J.dfdy                   + y * b[k+1].r.H.d2fdxy + b[k+1].r.J.dfdx);
-
-			b[k].i.J.dfdy   =       - b[k+2].i.J.dfdy   + s * (x * b[k+1].i.J.dfdy                                       + y * b[k+1].r.J.dfdy   + b[k+1].r.f);
-
-			b[k].i.H.d2fdyx =       - b[k+2].i.H.d2fdyx + s * (x * b[k+1].i.H.d2fdyx + b[k+1].i.J.dfdy                   + y * b[k+1].r.H.d2fdyx + b[k+1].r.J.dfdx);
-			b[k].i.H.d2fdy2 =       - b[k+2].i.H.d2fdy2 + s * (x * b[k+1].i.H.d2fdy2                                     + y * b[k+1].r.H.d2fdy2 + b[k+1].r.J.dfdy + b[k+1].r.J.dfdy);
-		}
-
-		return b[0];
-	}
-
-
-#include <tools/timer.h>
 int main(int argc, char* argv[]) 
 {
-    // globalCoefficients = chebyshevData("/home/winchenbach/dev/surfaceData/01 - Sphere/Sphere - Chebyshev QR-Decomposition -  - 2022-04-02_14-48-11.log");
-    globalCoefficients = chebyshevData("/home/winchenbach/dev/surfaceData/07 - Log SoR/SOR - Chebyshev QR-Decomposition -  - 2022-04-03_13-21-17.log");
-    // globalCoefficients = chebyshevData("/home/winchenbach/dev/surfaceData/02 - Cube/Cube - Chebyshev QR-Decomposition -  - 2022-04-03_16-39-04.log");
-
-
-    std::vector<scalar> coefficients{ 0x1.0000000000000p+0, -0x1.bfb5dbce01c41p-5, 0x1.08a2242d1a359p-1, 0x1.d7d54c363507dp-4, -0x1.5ab0400be2843p-2, -0x1.d1eae3a019217p-4, 0x1.53467431323d9p-3, 0x1.5eca3b803d81fp-4, -0x1.58e81cada5e99p-5, -0x1.e6236ce4c4606p-5, -0x1.c12efc8eac5e8p-6, 0x1.6276d0bf5035ep-5, 0x1.bec289393e0e2p-5, -0x1.1a219e6b86f2cp-5, -0x1.be6f9dca8d40bp-5, 0x1.c86edb95cfa5ep-6, 0x1.4faaec94f4b4cp-5, -0x1.531681d75560ep-6, -0x1.8b071512834abp-6, 0x1.9eec819b561b8p-7, 0x1.4685577420891p-7, -0x1.407ccf235ffb4p-8, -0x1.f826949ba693ap-11, -0x1.4d20028064b9ep-10, -0x1.8f467b5f5dfb1p-9, 0x1.4848b898bdbdcp-8, 0x1.cf8dedbe3c789p-9, -0x1.9b8c05d32b86cp-8, -0x1.2a668ad17ef8fp-9, 0x1.722b800f2f559p-8, 0x1.6163325b83c0dp-11, -0x1.03deb36dc62fdp-8, 0x1.ed102d5493f9cp-12, 0x1.0c0a899298079p-9, -0x1.e0e11a665aa61p-11, -0x1.e1fcde06475d1p-12, 0x1.a17d424cfcff5p-11, -0x1.1420db519d807p-11, -0x1.9620e087d4793p-12, 0x1.debd026d02dd2p-11, -0x1.77e2d9b1cfb88p-15, -0x1.c2a4c616293c8p-11, 0x1.5fa4e33273f1cp-12, 0x1.2f25b30b64a58p-11, -0x1.c728c92780f56p-12, -0x1.09bebd3bcdd60p-12, 0x1.8969dcd9e5390p-12, 0x1.680273ede1100p-20, -0x1.e695886d22a44p-13, 0x1.19d3db31d1c22p-13, 0x1.451d862a51092p-14, -0x1.5830b483f469ep-13, 0x1.47feae7218d71p-15, 0x1.080519441cabcp-13, -0x1.9dbd1095e7c3dp-14, -0x1.040581ab6cdc2p-14, 0x1.bdd7093daa787p-14, 0x1.1edc0b9d64c65p-18, -0x1.51cc6693f858ep-14, 0x1.05395b4abaeebp-15, 0x1.6338e2adf00abp-15, -0x1.613a8e4c9e76cp-15, -0x1.0a23005ae65a4p-17, 0x1.2713dca1a13fcp-15, -0x1.dc2544c9d7998p-17, -0x1.4d0ded3ce256ep-16, 0x1.7b9b2a8f7e71bp-16, 0x1.2590172e562fap-18, -0x1.59f326c541e35p-16, 0x1.a9b4323a1c73fp-18, 0x1.ba5470220865dp-17, -0x1.6d1c5c6a91d44p-17, -0x1.463a52fd827b3p-18, 0x1.5a32cadecb44bp-17, -0x1.80b6e24fbbfefp-20, -0x1.cd39e56e96a2fp-18, 0x1.366773fa23429p-18, 0x1.71cab65c2fec4p-19, -0x1.5205f7fca7e6fp-18, 0x1.14c353fe0d9d4p-21, 0x1.f16b4fcc3e700p-19, -0x1.33f1dd603abf4p-19, -0x1.dbb6cf7610516p-20, 0x1.64084d89122d9p-19, 0x1.6dd3f47632fabp-24, -0x1.150322e20639cp-19, 0x1.f5c7d0c7726b0p-21, 0x1.26036598cdf96p-20, -0x1.4ec6fff1a3e10p-20, -0x1.a61dad27fe1dap-23, 0x1.190d666bced26p-20, -0x1.a1469b963d869p-22, -0x1.45a66f0c91cf0p-21, 0x1.48ad8898fca18p-21, 0x1.5796bcdd57b4cp-23, -0x1.2a75cb7178f83p-21, 0x1.489cc531d2b5cp-23, 0x1.7af0d6daebba4p-22, -0x1.38b650ef06663p-22, -0x1.0e96f5eaffd60p-23, 0x1.30eb66ea77323p-22, -0x1.86dd2765c282fp-25, -0x1.9eb96c1b94f0dp-23, 0x1.1b87f08109b25p-23, 0x1.5ab30fd3869f0p-24, -0x1.316dec25e342cp-23, 0x1.59ac252061764p-27, 0x1.c0f26c684ecb2p-24, -0x1.037615fb53c96p-24, -0x1.aff1985341829p-25, 0x1.3385568a55678p-24, 0x1.975029396f7d1p-29, -0x1.e3f215e378686p-25, 0x1.bada768c2a27dp-26, 0x1.03418d1154959p-25, -0x1.2acce3e83b422p-25, -0x1.812e5674328bep-28, 0x1.f9930aa1acfeep-26, -0x1.6a0b052bdd143p-27, -0x1.289a48b8d3084p-26, 0x1.207e243827d7fp-26, 0x1.4b580bdc3afa5p-28, -0x1.075a94e0fe19ap-26, 0x1.113de10ebf786p-28, 0x1.5006ec8f4406dp-27, -0x1.10b92ed181238p-27, -0x1.e4cdf13420658p-29, 0x1.0d6b308d1b188p-27, -0x1.50acc4addcea3p-30, -0x1.723cbcdc933dcp-28, 0x1.f48281f359180p-29, 0x1.3bd4524d638a6p-29, -0x1.0f3992e52404dp-28, 0x1.e66b0c53c1961p-33, 0x1.910480e16b5f9p-29, -0x1.c152ed8ced550p-30, -0x1.863b4865a9378p-30, 0x1.0e2d141dd36aap-29, 0x1.cb1835183e3ccp-34, -0x1.aca6f786691b9p-30 };
-    coefficients = globalCoefficients[0];
-
-     globalFunction = cheb::Function(std::vector<cheb::IntervalFunction>{cheb::IntervalFunction(coefficients)});
-
-    // globalFunction = cheb::Function([](cheb::scalar x){ return std::cos(x * 13.) * sin(x * 25.);},cheb::Domain{-1.,1.});
-    // globalFunction = cheb::Function(std::vector<cheb::IntervalFunction>{cheb::IntervalFunction(coefficients)});
+    // f(x) = cos(13x) * sin(25x)
+    globalFunction = cheb::Function([](cheb::scalar x){ return std::cos(x * 13.) * sin(x * 25.);},cheb::Domain{-1.,1.});
+    globalCoefficients.push_back(globalFunction.funs[0].coeffs());
+    // f(x) = tan(-x)
     globalFunction = cheb::Function([](cheb::scalar x) { return std::tan(x); }, cheb::Domain{-1.,1.});
-    // globalFunction = cheb::Function([](cheb::scalar x) { return x * x * x - 1.; }, cheb::Domain{ -1.,1. });
-    // globalFunction = cheb::Function([](cheb::scalar x) { return x * x * x - 2. * x + 2.; }, cheb::Domain{ -1.,1. });
-    // globalFunction = cheb::Function([](cheb::scalar x) { return x * x * x * x * x - 1; }, cheb::Domain{ -1.,1. });
+    globalCoefficients.push_back(globalFunction.funs[0].coeffs());
+    // f(x) = abs(x)
+    // cheb::eps = std::numeric_limits<scalar>::epsilon() * 1e3;
+    // globalFunction = cheb::Function([](cheb::scalar x) { return std::abs(x); }, cheb::Domain{-1.,1.});
+    // globalCoefficients.push_back(globalFunction.funs[0].coeffs());
+    // cheb::eps = std::numeric_limits<scalar>::epsilon();
+    // f(x) = exp(-x)sin(x)
+    globalFunction = cheb::Function([](cheb::scalar x) { return std::exp(-x) * std::sin(x); }, cheb::Domain{-1.,1.});
+    globalCoefficients.push_back(globalFunction.funs[0].coeffs());
+    // f(x) = x^3 - 2x + 1
+    globalFunction = cheb::Function([](cheb::scalar x) { return x * x * x - 2. * x + 2.; }, cheb::Domain{ -1.,1. });
+    globalCoefficients.push_back(globalFunction.funs[0].coeffs());
+    // f(x) = x^3 - 1
+    globalFunction = cheb::Function([](cheb::scalar x) { return x * x * x - 1.; }, cheb::Domain{ -1.,1. });
+    globalCoefficients.push_back(globalFunction.funs[0].coeffs());
+    // f(x) = x^5 - 1
+    globalFunction = cheb::Function([](cheb::scalar x){ return x * x * x * x * x - .5; }, cheb::Domain{-1., 1.});
+    globalCoefficients.push_back(globalFunction.funs[0].coeffs());
+    // f(x) = tanh(x)
+    globalFunction = cheb::Function([](cheb::scalar x){ return std::tanh(x); }, cheb::Domain{-1., 1.});
+    globalCoefficients.push_back(globalFunction.funs[0].coeffs());
+    // f(x) = ln(1 + exp(x))
+    globalFunction = cheb::Function([](cheb::scalar x){ return std::log(1 + std::exp(x)); }, cheb::Domain{-1., 1.});
+    globalCoefficients.push_back(globalFunction.funs[0].coeffs());
+    // f(x) = 0.5 x (1 + erf(x/sqrt(2)))
+    globalFunction = cheb::Function([](cheb::scalar x){ return 0.5 * x * (1 + std::erf(x / std::sqrt(2))); }, cheb::Domain{-1., 1.});
+    globalCoefficients.push_back(globalFunction.funs[0].coeffs());
+    // f(x) = erf(x)
+    globalFunction = cheb::Function([](cheb::scalar x){ return std::erf(x); }, cheb::Domain{-1., 1.});
+    globalCoefficients.push_back(globalFunction.funs[0].coeffs());
+    // Teaser image
+    globalCoefficients.push_back({0x1.cac0684e08fa9p-7, 0x1.175db08d85ee6p-29, 0x1.7f1a95ebf3356p-35, -0x1.4a3a6350cbe08p-37, 0x1.4938bc58e7dcap-46, 0x1.23653faff6428p-45, -0x1.33226145f4p-51, -0x1.bccc0a6fp-54 });
+    // Test function 717
+    globalCoefficients.push_back({0x1.10fc7c5569b9ep+3, -0x1.51437cca43795p+0, -0x1.f5bab4a18965ep-2, -0x1.562b1df168a7cp-3, -0x1.c20092cd47efcp-5, -0x1.2d2e61ba9f892p-6, -0x1.99b9c624554a8p-8, -0x1.1a65df8552b52p-9, -0x1.8973970604da4p-11, -0x1.147bb89c7a32dp-12, -0x1.8761f07a244f4p-14, -0x1.16b145ee47474p-15, -0x1.8ef041975995ep-17, -0x1.1ecb5ac5f861p-18, -0x1.9dee1a4615aap-20, -0x1.2bb72ff2c0586p-21, -0x1.b351a054c6ab3p-23, -0x1.3cf890831d49ap-24, -0x1.ceaf60800749p-26, -0x1.52690ac65ec6p-27, -0x1.effb86808cbp-29, -0x1.6c190ff6861p-30, -0x1.0bb57658bap-31, -0x1.8a4090078p-33, -0x1.22b229bep-34, -0x1.ad38812p-36, -0x1.3d3b0ep-37, -0x1.d57352p-39, -0x1.5bc06p-40, -0x1.01bf8p-41, -0x1.7dc5p-43, -0x1.1ab8p-44, -0x1.ap-46});
+    // Test function 7173
+    globalCoefficients.push_back({0x1.501dd4b3eac76p+3, -0x1.1b2382387516ep+0, 0x1.063f1e052e0bep-1, -0x1.354fbf4835015p-7, -0x1.a79e986a0a751p-9, -0x1.cc1c4b94b001ap-11, -0x1.d4ed4411b1f4dp-13, -0x1.d2b50f32433adp-15, -0x1.cbf6735b6be15p-17, -0x1.c382ee845d5c4p-19, -0x1.baa5d1e76f96p-21, -0x1.b1faebe41b78p-23, -0x1.a9ca3aa428p-25, -0x1.a23219a71p-27, -0x1.9b3bce08p-29, -0x1.94e5eaap-31, -0x1.8f298p-33, -0x1.89fdc6p-35, -0x1.8559cp-37, -0x1.814076p-39, -0x1.7da262p-41, -0x1.7b96b98p-43, -0x1.740529p-45});
+    // Test function 71734
+    globalCoefficients.push_back({0x1.1ab97ffe88f6dp+3, -0x1.1eff319b19f4ep+0, -0x1.27c1920bb214fp-1, -0x1.fd4654d5e066dp-3, -0x1.8de1b703fbeb5p-4, -0x1.3ab9cd1da7a16p-5, -0x1.f8ca1677a832ap-7, -0x1.99a612f24be6cp-8, -0x1.4fba5c7a24f55p-9, -0x1.156608e715a8p-10, -0x1.cd8a3357dff0dp-12, -0x1.822c90756f89ep-13, -0x1.44b4ef3e7a6f4p-14, -0x1.122efb11a112p-15, -0x1.d0c1b3ebe51fep-17, -0x1.8b2cba84d4983p-18, -0x1.50fa14025671bp-19, -0x1.20161b9c215a7p-20, -0x1.edb5d18cdb788p-22, -0x1.a7ed2452ef68p-23, -0x1.6cb08244488cp-24, -0x1.3a4426dbf8f8p-25, -0x1.0f3cdf753fcp-26, -0x1.d4df6b1188p-28, -0x1.95ca9c46cp-29, -0x1.5fa01128p-30, -0x1.3108cc08p-31, -0x1.08e50f1p-32, -0x1.cc86584p-34, -0x1.90ae72p-35, -0x1.5ceb2p-36, -0x1.301504p-37, -0x1.094p-38, -0x1.cee28p-40, -0x1.943ccp-41, -0x1.61688p-42, -0x1.35158p-43, -0x1.0db38p-44, -0x1.dbcp-46});
+    // Test function 717346
+    globalCoefficients.push_back({0x1.e1a9bab7850ccp+1, -0x1.632ff31acd9e7p+0, 0x1.a51b400959a36p+1, -0x1.108a2013afb52p-1, -0x1.6af899ca4697dp-2, -0x1.d1727786ab0a5p-3, -0x1.2857c8a431afep-3, -0x1.79c7ee5732c44p-4, -0x1.e34a8fc627522p-5, -0x1.366572c3f8139p-5, -0x1.904f93669fc86p-6, -0x1.031a9991e2f04p-6, -0x1.508fa45f4dfe4p-7, -0x1.b686caab210a2p-8, -0x1.1e7d5dd597f1dp-8, -0x1.774598f3f0d04p-9, -0x1.ecb06160ceb12p-10, -0x1.4417805e2f641p-10, -0x1.ab2e1ef5d1324p-11, -0x1.1a03a715408fcp-11, -0x1.74f215e50625cp-12, -0x1.ede958921102fp-13, -0x1.477e5b840c92ap-13, -0x1.b2d5509f16dfap-14, -0x1.2102104efbc92p-14, -0x1.809514a3645e3p-15, -0x1.0022a1c482cbp-15, -0x1.557e2e786c68fp-16, -0x1.c7b0e23cc858ap-17, -0x1.304942ad1ef8ep-17, -0x1.96aeccc1cae06p-18, -0x1.0ff6d75c6acc5p-18, -0x1.6bfe0d4df5f11p-19, -0x1.e7793cffc22e5p-20, -0x1.469eca02a19fap-20, -0x1.b5f0a33b44ecep-21, -0x1.25c29328a20fp-21, -0x1.8a4c8ec990488p-22, -0x1.08c10a23a84ap-22, -0x1.63b52b15a726p-23, -0x1.de1f1148ec8ep-24, -0x1.4177f2ced4cap-24, -0x1.b075c9882ac8p-25, -0x1.230006a11e74p-25, -0x1.87c56fc98b2p-26, -0x1.07d055c974cp-26, -0x1.636b7dd828p-27, -0x1.defe37b11cp-28, -0x1.42de159cfp-28, -0x1.b364b451ap-29, -0x1.25a794cfp-29, -0x1.8c3a27b08p-30, -0x1.0b631055p-30, -0x1.68fa3a76p-31, -0x1.e7731a3cp-32, -0x1.49328118p-32, -0x1.bcbfcb4p-33, -0x1.2c7fd1ep-33, -0x1.9628e6p-34, -0x1.128bbbcp-34, -0x1.733bdp-35, -0x1.f614dcp-36, -0x1.53966p-36, -0x1.cb7544p-37, -0x1.36dep-37, -0x1.a4be9p-38, -0x1.1ccacp-38, -0x1.818ccp-39, -0x1.050ecp-39, -0x1.6186p-40, -0x1.dee1ap-41, -0x1.44612p-41, -0x1.b769cp-42, -0x1.29b78p-42, -0x1.93864p-43, -0x1.12112p-43, -0x1.739aep-44, -0x1.f8578p-45, -0x1.555a8p-45, -0x1.d1782p-46, -0x1.3cb2ep-46, -0x1.b02d4p-47, -0x1.2fe7dp-47});
+    // Test function 110109
+    globalCoefficients.push_back({0x1.2d68d860a1dfap+3, -0x1.d2fcf66941e4ap-1, -0x1.26094d5cca5ecp-1, -0x1.03a4799511c02p-2, -0x1.9957f994885f9p-4, -0x1.469660f91d278p-5, -0x1.08209d8a36004p-6, -0x1.b04a08e216b38p-8, -0x1.653ce3a2ef52p-9, -0x1.299f7d9c1b3bcp-10, -0x1.f34a698d89781p-12, -0x1.a536869b92ep-13, -0x1.65173d65b7adap-14, -0x1.3003729395a3ap-15, -0x1.03c7fd9ecf651p-16, -0x1.bd68b898b7187p-18, -0x1.7eef6f914bef7p-19, -0x1.4a1105d690058p-20, -0x1.1d264716c4352p-21, -0x1.edb5915d27abp-23, -0x1.ac34dbc8b524p-24, -0x1.7407320cf22p-25, -0x1.43b96e7b966p-26, -0x1.1a187f905p-27, -0x1.ec49ed5d3p-29, -0x1.ae12ba688p-30, -0x1.782516ccp-31, -0x1.49532eep-32, -0x1.209d4c2p-33, -0x1.fa5656p-35, -0x1.bc892ep-36, -0x1.869a68p-37, -0x1.578p-38, -0x1.2e387p-39, -0x1.0a246p-40, -0x1.d4828p-42, -0x1.9d76p-43, -0x1.6b498p-44, -0x1.3c858p-45});
+    // Test function 1487127
+    globalCoefficients.push_back({0x1.abc42004e3953p+0, 0x1.bbb01fbcaefa2p+1, 0x1.082a9fd68def4p+2, 0x1.738ef1c2e6747p-13, -0x1.a146d43740c54p-16, -0x1.2bef0c399955ep-18, -0x1.28b4ace759101p-21, -0x1.07f708eadab4p-24, -0x1.c133d6aee3199p-28, -0x1.75db6b631131p-31, -0x1.336eb9aa5f8p-34, -0x1.f625322538p-38, -0x1.98210188p-41, -0x1.48e4a18p-44});
 
-    // globalFunction = cheb::Function([](cheb::scalar x) { return std::exp(x) * std::sin(x); }, cheb::Domain{-1.,1.});
-
-
-
-    globalFunctionFirstDerivative = globalFunction.derivative();
-    globalFunctionSecondDerivative = globalFunctionFirstDerivative.derivative();
-
-    std::cout << evalFunction(cheb::complex(1., 0.)) << " :8 " << globalFunction(1.) << std::endl;
-
-    for (auto c : globalFunction.funs[0].coeffs())
-        std::cout << c << " ";
-    std::cout << std::endl;
-
-    auto eval = [](cheb::complex location){
-        auto fn = [](scalar x, scalar y){
-                cheb::complex location(x,y);
-            auto [fr, fi] = deriv(location, globalFunction.funs[0].coeffs());
-
-            auto f = fr.f * fr.f + fi.f * fi.f;
-
-            auto dfdx = 2. * fr.f * fr.J.dfdx + 2. * fi.f * fi.J.dfdx;
-            auto dfdy = 2. * fr.f * fr.J.dfdy + 2. * fi.f * fi.J.dfdy;
-
-            auto d2fdx2 = 2. * (fr.J.dfdx * fr.J.dfdx + fr.f * fr.H.d2fdx2 + fi.J.dfdx * fi.J.dfdx + fi.f * fi.H.d2fdx2);
-            auto d2fdxy = 2. * (fr.J.dfdy * fr.J.dfdx + fr.f * fr.H.d2fdxy + fi.J.dfdy * fi.J.dfdx + fi.f * fi.H.d2fdxy);
-            auto d2fdyx = 2. * (fr.J.dfdy * fr.J.dfdx + fr.f * fr.H.d2fdyx + fi.J.dfdy * fi.J.dfdx + fi.f * fi.H.d2fdyx);
-            auto d2fdy2 = 2. * (fr.J.dfdy * fr.J.dfdy + fr.f * fr.H.d2fdy2 + fi.J.dfdy * fi.J.dfdy + fi.f * fi.H.d2fdy2);
-
-            Jacobian J{dfdx,dfdy};
-            Hessian H{d2fdx2, d2fdxy, d2fdyx, d2fdy2};
-	        return FunctionState{f,J,H};
-        };
-        auto [fr, fi] = deriv(location, globalFunction.funs[0].coeffs());
-
-        auto x = location.real();
-        auto y = location.imag();
-        auto [f,J,H] = fn(x,y);
-        auto h = 1e-6;
-        auto [fx, Jx, Hx] = fn(x + h, y);
-        auto [fy, Jy, Hy] = fn(x, y + h);
-
-
-        std::cout << "f( " << location.real() << " + " << location.imag() << "i ) = " << fr.f << " + " << fi.f << "i -> " << f << std::endl;
-
-        std::cout << J.dfdx << " : " << J.dfdy << " | " << (fx - f) / h << " : " << (fy - f) / h << std::endl;
-
-        std::cout << H.d2fdx2 << " | " << (Jx.dfdx - J.dfdx) / h << std::endl;
-        std::cout << H.d2fdxy << " | " << (Jx.dfdy - J.dfdy) / h << std::endl;
-        std::cout << H.d2fdyx << " | " << (Jy.dfdx - J.dfdx) / h << std::endl;
-        std::cout << H.d2fdy2 << " | " << (Jy.dfdy - J.dfdy) / h << std::endl;
-
-        
-
-        auto det = H.d2fdx2 * H.d2fdy2 - H.d2fdxy * H.d2fdyx;
-        Hessian H_1{ H.d2fdy2 / det, -H.d2fdxy / det, -H.d2fdyx / det, H.d2fdx2/det};
-
-        auto prodx = H_1.d2fdx2 * J.dfdx + H_1.d2fdxy * J.dfdy;
-        auto prody = H_1.d2fdyx * J.dfdx + H_1.d2fdy2 * J.dfdy;
-
-        auto dx = cheb::complex(prodx, prody);
-        std::cout << det << " : " << H_1.d2fdx2 << " " << H_1.d2fdxy << " " << H_1.d2fdyx << " " << H_1.d2fdy2 << std::endl;
-
-        std::cout << "[ " << prodx << " : " << prody << " ] -- [ " << -J.dfdx << " : " << -J.dfdy << " ]" << std::endl;
-
-
-        std::cout<< std::endl;
-    };
-
-    eval(cheb::complex(-1, -1));
-    eval(cheb::complex(-1, 1));
-    eval(cheb::complex(1, -1));
-    eval(cheb::complex(1, 1));
-    eval(cheb::complex(0, 0));
-    //system("pause");
-   // int x = getchar();
-
+    std::cout << "Coefficient count: " << globalFunction.funs[0].coeffs().size() << std::endl;
 
     auto& gui = GUI::instance();
     gui.render_lock.lock();
@@ -484,18 +70,6 @@ int main(int argc, char* argv[])
     gui.initGL();
     gui.renderLoop();
 
-
-    for (auto tptr : TimerManager::getTimers()) {
-        auto& t = *tptr;
-        auto stats = t.getStats().value();
-        scalar sum = 0.;
-        for (auto s : t.getSamples()) {
-            sum += s;
-        }
-        std::cout << std::setprecision(4);
-        std::cout << t.getDecriptor() << ": " << stats.median << "ms / " << stats.avg << "ms @ " << stats.stddev << " : " << stats.min << "ms / " << stats.max << "ms, total: " << sum/1000. << "s\n";
-
-    }
 
     return 0;
 }

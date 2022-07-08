@@ -2,83 +2,12 @@
 #include <cheb/algorithms.h>
 #include <armadillo>
 #include <numbers>
-#define FFTW_DLL 
-#include <fftw3.h>
 #include <array>
 namespace cheb {
-//#define USE_FFTW3
-#ifdef USE_FFTW3
-	std::mutex fftwlock;
-	template<std::size_t N = 131072>
-	struct fft_wrapper {
-		fftw_complex* in, *out;
-		std::map<std::size_t, fftw_plan> iplans, fplans;
-
-
-		svec ifft(svec vals) {
-			auto n = vals.size();
-			if (!iplans.contains(n)) {
-				std::lock_guard lg(fftwlock);
-				iplans[n] = fftw_plan_dft_1d(n, in, out, FFTW_BACKWARD, FFTW_ESTIMATE);
-			}
-			
-			for (int i = 0; i < n; i++) {
-				in[i][0] = vals[i];
-				in[i][1] = 0.0;
-			}
-			fftw_execute(iplans[n]);
-			svec resv(vals.size());
-			for (int i = 0; i < n; i++) {
-				resv[i] = 1.0 / (double) n * out[i][0];
-			}
-			return resv;
-		}
-		svec fft(svec vals) {
-			auto n = vals.size();
-			if (!fplans.contains(n)) {
-				std::lock_guard lg(fftwlock);
-				fplans[n] = fftw_plan_dft_1d(n, in, out, FFTW_FORWARD, FFTW_ESTIMATE);
-			}
-
-			for (int i = 0; i < n; i++) {
-				in[i][0] = vals[i];
-				in[i][1] = 0.0;
-			}
-			fftw_execute(fplans[n]);
-			svec resv(vals.size());
-			for (int i = 0; i < n; i++) {
-				resv[i] = out[i][0];
-			}
-			return resv;
-		}
-		~fft_wrapper() {
-			std::lock_guard lg(fftwlock);
-			for (auto& p : iplans)
-				fftw_destroy_plan(p.second);
-			for (auto& p : fplans)
-				fftw_destroy_plan(p.second);
-			delete[] in;
-			delete[] out;
-		}
-		fft_wrapper() {
-			in = new fftw_complex[N];
-			out = new fftw_complex[N];
-		}
-	};
-	thread_local fft_wrapper fftw;
-#endif
 	inline svec fft(svec vals) {
 		if (vals.size() <= 1)
 			return vals;
 
-#ifdef USE_FFTW3
-		auto n = vals.size();
-		if ((n & (n - 1)) == 0) {
-			//fft_wrapper fftw;
-			return fftw.fft(vals);
-		}
-		else 
-#endif
 		{
 			arma::vec v = arma::zeros(vals.size());
 			for (int32_t i = 0; i < vals.size(); ++i)
@@ -96,14 +25,6 @@ namespace cheb {
 		if (vals.size() <= 1)
 			return vals;
 
-#ifdef USE_FFTW3
-		auto n = vals.size();
-		if ((n & (n - 1)) == 0) {
-			//fft_wrapper fftw;
-			return fftw.ifft(vals);
-		}
-		else 
-#endif
 		{
 			arma::cx_vec v(vals.size());
 			for (int32_t i = 0; i < vals.size(); ++i)

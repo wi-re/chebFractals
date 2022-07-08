@@ -81,7 +81,8 @@
         "stack": "cpp",
         "ios": "cpp",
         "__functional_base": "cpp",
-        "filesystem": "cpp"
+        "filesystem": "cpp",
+        "cfloat": "cpp"
     },
     "cmake.configureOnOpen": false
 }
