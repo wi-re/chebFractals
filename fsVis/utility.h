@@ -19,16 +19,16 @@ struct v4 {
   float x, y, z, w;
 };
 
-inline int32_t screenWidth = 3840;
-inline int32_t screenHeight = 2160;
+inline int32_t screenWidth = 1920;
+inline int32_t screenHeight = 1080;
 constexpr inline scalar epsilon((scalar)1e-7);
 
 void initializeParameters();
 void render();
 void initRender();
 
-uint create1DTexture(v4 *colorMap, int32_t elements);
-uint createProgram(std::string vertexSource, std::string fragmentSource);
+uint32_t create1DTexture(v4 *colorMap, int32_t elements);
+uint32_t createProgram(std::string vertexSource, std::string fragmentSource);
 // converts a std::chrono duration to a millisecond value
 scalar toMs(clk::duration dur);
 std::pair<vec, vec> getDomain();

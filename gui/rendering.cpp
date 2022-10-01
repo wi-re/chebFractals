@@ -104,11 +104,20 @@ void GUI::renderLoop() {
     WATCH(scalar, domain, xmax);
     WATCH(scalar, domain, ymin);
     WATCH(scalar, domain, ymax);
+    static int32_t i = 0;
+    i++;
+    if (i % 5 == 0) {
+        if (m_ffmpegPipe != nullptr && ParameterManager::instance().get<bool>("recording.done") && ParameterManager::instance().get<bool>("recording.active")) {
+            static int32_t* buffer = new int32_t[screenWidth * screenHeight];
+            glReadPixels(0, 0, screenWidth, screenHeight, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
+            fwrite(buffer, sizeof(int) * screenWidth * screenHeight, 1, m_ffmpegPipe);
 
-    if (m_ffmpegPipe != nullptr && dirty) {
-      static int32_t *buffer = new int32_t[screenWidth * screenHeight];
-      glReadPixels(0, 0, screenWidth, screenHeight, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
-      fwrite(buffer, sizeof(int) * screenWidth * screenHeight, 1, m_ffmpegPipe);
+            ParameterManager::instance().get<scalar>("field.offset") += ParameterManager::instance().get<scalar>("recording.step");
+            if (ParameterManager::instance().get<scalar>("field.offset") > ParameterManager::instance().get<scalar>("recording.max_offset"))
+                ParameterManager::instance().get<bool>("recording.active") = false;
+
+        }
+        ParameterManager::instance().get<bool>("recording.done") = false;
     }
 
     ImGui::NewFrame();

@@ -15,6 +15,7 @@
 
 cheb::Function globalFunction;
 std::vector<std::vector<double>> globalCoefficients;
+scalar realOffset, complexOffset;
 
 void initializeParameters() {
   static auto vectorModes = std::vector<detail::iAny>{std::string("real"),          std::string("imag"),         std::string("abs"),    std::string("real gradient"),
@@ -92,6 +93,16 @@ void initializeParameters() {
   static auto methods = std::vector<detail::iAny>{std::string("newton"), std::string("newton optimizer"), std::string("newton hessian"),
                                                   std::string("adam"),   std::string("halley"),           std::string("gradientDescent")};
   ParameterManager::instance().newParameter("field.method", std::string("newton"), {.constant = false, .presets = methods});
+  ParameterManager::instance().newParameter("field.offset", scalar(0.00), { .constant = false, .range = genRange(-1.,1.)});
+  ParameterManager::instance().newParameter("field.coffset", scalar(0.00), { .constant = false, .range = genRange(-1.,1.) });
+
+
+  ParameterManager::instance().newParameter("recording.min_offset", scalar(-1.00), { .constant = false, .range = genRange(-1.,1.) });
+  ParameterManager::instance().newParameter("recording.max_offset", scalar(1.00), { .constant = false, .range = genRange(-1.,1.) });
+  ParameterManager::instance().newParameter("recording.step", scalar(0.01), { .constant = false, .range = genRange(-1.,1.) });
+  ParameterManager::instance().newParameter("recording.active", bool(false), { .constant = false});
+  ParameterManager::instance().newParameter("recording.done", bool(false), { .constant = false });
+
 }
 
 std::pair<vec, vec> getDomain() {

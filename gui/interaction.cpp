@@ -100,6 +100,8 @@ void GUI::keyCallback(GLFWwindow *window, int key, int scancode, int action, int
   case GLFW_KEY_R:
     ParameterManager::instance().get<int32_t>("field.nx") = screenWidth;
     ParameterManager::instance().get<int32_t>("field.ny") = screenHeight;
+    ParameterManager::instance().get<bool>("recording.active") = true;
+    ParameterManager::instance().get<scalar>("field.offset") = ParameterManager::instance().get<scalar>("recording.min_offset");
     break;
   case GLFW_KEY_E:
     ParameterManager::instance().get<int32_t>("field.nx") = 128;

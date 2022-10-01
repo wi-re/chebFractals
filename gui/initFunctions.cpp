@@ -54,8 +54,8 @@ void GUI::initGL() {
   clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
   glfwSetKeyCallback(window, [](GLFWwindow *window, int key, int scancode, int action, int mods) { GUI::instance().keyCallback(window, key, scancode, action, mods); });
-//   glfwSetCursorPosCallback(window, [](GLFWwindow *window, double xpos, double ypos) { GUI::instance().cursorPositionCallback(window, xpos, ypos); });
-//   glfwSetMouseButtonCallback(window, [](GLFWwindow *window, int button, int action, int mods) { GUI::instance().mouseButtonCallback(window, button, action, mods); });
+   glfwSetCursorPosCallback(window, [](GLFWwindow *window, double xpos, double ypos) { GUI::instance().cursorPositionCallback(window, xpos, ypos); });
+   glfwSetMouseButtonCallback(window, [](GLFWwindow *window, int button, int action, int mods) { GUI::instance().mouseButtonCallback(window, button, action, mods); });
 //   glfwSetScrollCallback(window, [](GLFWwindow *window, double xpos, double ypos) { GUI::instance().scrollCallback(window, xpos, ypos); });
   glfwSwapInterval(0);
   initRender();

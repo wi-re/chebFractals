@@ -29,6 +29,8 @@ inline int32_t dataHeight = 32;
 
 extern cheb::Function globalFunction;
 
+extern scalar realOffset, complexOffset;
+
 struct Jacobian {
   cheb::scalar dfdx = 0.0, dfdy = 0.0;
 };
