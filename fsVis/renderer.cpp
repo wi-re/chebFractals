@@ -520,15 +520,9 @@ std::pair<float, float> updateField(float *data, float *angular, float *radial) 
 void renderField() {
   static GLuint textureID, radialTextureID, angularTextureID, vao, texID, angTexID, radTexID, program, minUni, maxUni, texUnit, fracuni;
   static bool once = true;
-  static float *data = new float[screenWidth * screenHeight];
-  static float *angularData = new float[screenWidth * screenHeight];
-  static float *radialData = new float[screenWidth * screenHeight];
   if (once) {
     std::default_random_engine generator;
     std::uniform_real_distribution<double> distribution(0.0, 1.0);
-    for (int32_t i = 0; i < screenWidth * screenHeight; ++i) {
-      data[i] = 0.f;
-    }
     auto vtxShader = R"(#version 150
 
 // Input vertex data, different for all executions of this shader.
@@ -608,18 +602,6 @@ if(rel < -0.5){
 
     // "Bind" the newly created texture : all future texture functions will
     // modify this texture
-    glBindTexture(GL_TEXTURE_2D, textureID);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, screenWidth, screenHeight, 0, GL_RED, GL_FLOAT, data);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glBindTexture(GL_TEXTURE_2D, radialTextureID);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, screenWidth, screenHeight, 0, GL_RED, GL_FLOAT, data);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glBindTexture(GL_TEXTURE_2D, angularTextureID);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, screenWidth, screenHeight, 0, GL_RED, GL_FLOAT, data);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
     GLuint quad_vertexbuffer;
     glGenBuffers(1, &quad_vertexbuffer);
@@ -705,6 +687,40 @@ if(rel < -0.5){
 
     glUseProgram(0);
     glBindVertexArray(0);
+  }
+
+
+  static float* data;
+  static float* angularData;
+  static float* radialData;
+  static int32_t oldWidth = -1, oldHeight = -1;
+  if (oldWidth != screenWidth || oldHeight != screenHeight) {
+      oldWidth = screenWidth;
+      oldHeight = screenHeight;
+      if (data != nullptr) {
+          free(data);
+          free(angularData);
+          free(radialData);
+      }
+      data = new float[screenWidth * screenHeight];
+      angularData = new float[screenWidth * screenHeight];
+      radialData = new float[screenWidth * screenHeight];
+
+      glBindTexture(GL_TEXTURE_2D, textureID);
+      glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, screenWidth, screenHeight, 0, GL_RED, GL_FLOAT, data);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+      glBindTexture(GL_TEXTURE_2D, radialTextureID);
+      glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, screenWidth, screenHeight, 0, GL_RED, GL_FLOAT, data);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+      glBindTexture(GL_TEXTURE_2D, angularTextureID);
+      glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, screenWidth, screenHeight, 0, GL_RED, GL_FLOAT, data);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+      for (int32_t i = 0; i < screenWidth * screenHeight; ++i) {
+          data[i] = 0.f;
+      }
   }
 
   static std::string colorMap = "";

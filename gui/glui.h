@@ -82,4 +82,5 @@ public:
     void cursorPositionCallback(GLFWwindow *window, double xpos, double ypos);
     void mouseButtonCallback(GLFWwindow *window, int button, int action, int mods);
     void scrollCallback(GLFWwindow *window, double xoffset, double yoffset);
+    void sizeCallback(GLFWwindow* window, int width, int height);
 };
