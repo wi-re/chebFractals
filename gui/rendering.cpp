@@ -72,7 +72,15 @@ void GUI::renderLoop() {
         auto s = ss.str();
         std::replace(s.begin(), s.end(), ':', '-');
 
-        static int32_t *buffer = new int32_t[screenWidth * screenHeight];
+        static int32_t *buffer;
+        static int32_t oldWidth = -1, oldHeight = -1;
+        if (oldWidth != screenWidth || oldHeight != screenHeight) {
+            oldWidth = screenWidth;
+            oldHeight = screenHeight;
+            if (buffer != nullptr)
+                free(buffer);
+            buffer = new int32_t[screenWidth * screenHeight];
+        }
         char *buffC = (char *)buffer;
         glReadPixels(0, 0, screenWidth, screenHeight, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
 
@@ -104,11 +112,29 @@ void GUI::renderLoop() {
     WATCH(scalar, domain, xmax);
     WATCH(scalar, domain, ymin);
     WATCH(scalar, domain, ymax);
+    static int32_t i = 0;
+    i++;
+    if (i % 5 == 0) {
+        if (m_ffmpegPipe != nullptr && ParameterManager::instance().get<bool>("recording.done") && ParameterManager::instance().get<bool>("recording.active")) {
+            static int32_t* buffer = nullptr;
+            static int32_t oldWidth = -1, oldHeight = -1;
+            if (oldWidth != screenWidth || oldHeight != screenHeight) {
+                oldWidth = screenWidth;
+                oldHeight = screenHeight;
+                if (buffer != nullptr)
+                    free(buffer);
+                buffer = new int32_t[screenWidth * screenHeight];
+            }
 
-    if (m_ffmpegPipe != nullptr && dirty) {
-      static int32_t *buffer = new int32_t[screenWidth * screenHeight];
-      glReadPixels(0, 0, screenWidth, screenHeight, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
-      fwrite(buffer, sizeof(int) * screenWidth * screenHeight, 1, m_ffmpegPipe);
+            glReadPixels(0, 0, screenWidth, screenHeight, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
+            fwrite(buffer, sizeof(int) * screenWidth * screenHeight, 1, m_ffmpegPipe);
+
+            ParameterManager::instance().get<scalar>("field.offset") += ParameterManager::instance().get<scalar>("recording.step");
+            if (ParameterManager::instance().get<scalar>("field.offset") > ParameterManager::instance().get<scalar>("recording.max_offset"))
+                ParameterManager::instance().get<bool>("recording.active") = false;
+
+        }
+        ParameterManager::instance().get<bool>("recording.done") = false;
     }
 
     ImGui::NewFrame();

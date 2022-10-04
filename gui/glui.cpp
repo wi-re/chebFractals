@@ -12,8 +12,8 @@ void GUI::uiFunctions() {
     ParameterManager::instance().buildImguiWindow(&show_parameter_window);
   // if (show_timer_window) TimerWindow(&show_timer_window);
   static bool show_ray_window = true;
-  // RayWindow(&show_ray_window);
-  OSD();
+   RayWindow(&show_ray_window);
+  //OSD();
   ImGui::Render();
 }
 void GUI::quit() {

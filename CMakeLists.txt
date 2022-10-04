@@ -108,6 +108,13 @@ _GLOB_SOURCES("tools")
 SET(toolSources "${source_list}")
 
 
+add_executable(online Source.cpp ${chebSources} ${guiSources} ${imguiSources} ${visSources} ${toolSources})
 
-add_executable(gui Source.cpp ${chebSources} ${guiSources} ${imguiSources} ${visSources} ${toolSources})
-_SETUP_DEPENDENCIES(gui glfw glad::glad ) 
+add_executable(offline offline.cpp ${chebSources} ${guiSources} ${imguiSources} ${visSources} ${toolSources})
+
+add_executable(viewer viewer.cpp ${chebSources} ${guiSources} ${imguiSources} ${visSources} ${toolSources})
+
+_SETUP_DEPENDENCIES(online glfw glad::glad ) 
+_SETUP_DEPENDENCIES(viewer glfw glad::glad ) 
+_SETUP_DEPENDENCIES(offline glfw glad::glad ) 
+ 

@@ -186,7 +186,7 @@ void initRender() {
 enum struct renderMode_t { real, imag, realGradient, imagGradient, fractal, abs, absGradient, f2, Jx, Jy };
 
 #include <mutex>
-
+#include <omp.h>
 #include <cfloat>
 
 struct progressBarLocal {
@@ -369,8 +369,11 @@ std::pair<float, float> updateField(float *data, float *angular, float *radial) 
   progressBarLocal pbl{nx * ny};
   std::atomic<int32_t> iterationCounter = 0;
 
-#pragma omp parallel for schedule(dynamic, 1)
+  std::cout << "max threads: " << omp_get_max_threads() << std::endl;
+
+#pragma omp parallel for schedule(dynamic, 32) num_threads(32)
   for (int32_t it = 0; it < nx * ny; ++it) {
+      //printf("%d ", omp_get_thread_num());
     {
       int32_t x = it % nx;
       int32_t y = it / nx;
@@ -421,6 +424,10 @@ std::pair<float, float> updateField(float *data, float *angular, float *radial) 
         cheb::complex pos = cheb::complex(xPos, yPos);
         cheb::complex prior = pos;
         inputFieldData[y * nx + x] = pos;
+
+        realOffset = ParameterManager::instance().get<scalar>("field.offset");
+        complexOffset = ParameterManager::instance().get<scalar>("field.coffset");
+
         // newton
         auto [state, location, positions, values, steps] = optimize(pos, method);
         pos = location;
@@ -442,12 +449,13 @@ std::pair<float, float> updateField(float *data, float *angular, float *radial) 
       }
     }
     int32_t iter = ++iterationCounter;
-    if (iter % 128 == 0) {
+    if (iter % 12800 == 0) {
 #pragma omp critical
       { pbl.update(iter, 1); }
     }
   }
   std::cout << "\nFinished generating Visualization" << std::endl;
+  ParameterManager::instance().get<bool>("recording.done") = true;
 
   auto min = *std::min_element(scalarFieldData, scalarFieldData + nx * ny);
   auto max = *std::max_element(scalarFieldData, scalarFieldData + nx * ny);
@@ -512,15 +520,9 @@ std::pair<float, float> updateField(float *data, float *angular, float *radial) 
 void renderField() {
   static GLuint textureID, radialTextureID, angularTextureID, vao, texID, angTexID, radTexID, program, minUni, maxUni, texUnit, fracuni;
   static bool once = true;
-  static float *data = new float[screenWidth * screenHeight];
-  static float *angularData = new float[screenWidth * screenHeight];
-  static float *radialData = new float[screenWidth * screenHeight];
   if (once) {
     std::default_random_engine generator;
     std::uniform_real_distribution<double> distribution(0.0, 1.0);
-    for (int32_t i = 0; i < screenWidth * screenHeight; ++i) {
-      data[i] = 0.f;
-    }
     auto vtxShader = R"(#version 150
 
 // Input vertex data, different for all executions of this shader.
@@ -600,18 +602,6 @@ if(rel < -0.5){
 
     // "Bind" the newly created texture : all future texture functions will
     // modify this texture
-    glBindTexture(GL_TEXTURE_2D, textureID);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, screenWidth, screenHeight, 0, GL_RED, GL_FLOAT, data);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glBindTexture(GL_TEXTURE_2D, radialTextureID);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, screenWidth, screenHeight, 0, GL_RED, GL_FLOAT, data);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glBindTexture(GL_TEXTURE_2D, angularTextureID);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, screenWidth, screenHeight, 0, GL_RED, GL_FLOAT, data);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
     GLuint quad_vertexbuffer;
     glGenBuffers(1, &quad_vertexbuffer);
@@ -699,6 +689,40 @@ if(rel < -0.5){
     glBindVertexArray(0);
   }
 
+
+  static float* data;
+  static float* angularData;
+  static float* radialData;
+  static int32_t oldWidth = -1, oldHeight = -1;
+  if (oldWidth != screenWidth || oldHeight != screenHeight) {
+      oldWidth = screenWidth;
+      oldHeight = screenHeight;
+      if (data != nullptr) {
+          free(data);
+          free(angularData);
+          free(radialData);
+      }
+      data = new float[screenWidth * screenHeight];
+      angularData = new float[screenWidth * screenHeight];
+      radialData = new float[screenWidth * screenHeight];
+
+      glBindTexture(GL_TEXTURE_2D, textureID);
+      glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, screenWidth, screenHeight, 0, GL_RED, GL_FLOAT, data);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+      glBindTexture(GL_TEXTURE_2D, radialTextureID);
+      glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, screenWidth, screenHeight, 0, GL_RED, GL_FLOAT, data);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+      glBindTexture(GL_TEXTURE_2D, angularTextureID);
+      glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, screenWidth, screenHeight, 0, GL_RED, GL_FLOAT, data);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+      for (int32_t i = 0; i < screenWidth * screenHeight; ++i) {
+          data[i] = 0.f;
+      }
+  }
+
   static std::string colorMap = "";
   // std::cout << colorMap << " : " <<
   // ParameterManager::instance().get<std::string>("colorMap.colorMap") <<
@@ -765,6 +789,8 @@ if(rel < -0.5){
   WATCH(scalar, field, learningRate);
   WATCH(bool, field, clustering);
   WATCH(bool, field, cycles);
+  WATCH(scalar, field, offset);
+  WATCH(scalar, field, coffset);
   static int32_t oldIndex = -1;
   auto index = ParameterManager::instance().get<int32_t>("index");
   dirty = dirty || (index != oldIndex);
@@ -829,54 +855,57 @@ void render() {
   // glOrtho(40, 60, 3, 13, 0, 1);
 
   renderField();
-  static bool once = true;
-  bool dirty = once;
-  WATCH(double, path, x);
-  WATCH(double, path, y);
-  WATCH(std::string, field, method);
-  WATCH(scalar, adam, alpha);
-  WATCH(scalar, adam, beta1);
-  WATCH(scalar, adam, beta2);
-  WATCH(scalar, adam, eps);
-  WATCH(scalar, field, learningRate);
-  // if (dirty) {
-  //   trace.clear();
+  if (ParameterManager::instance().get<bool>("path.display")) {
+      static bool once = true;
+      bool dirty = once;
+      WATCH(double, path, x);
+      WATCH(double, path, y);
+      WATCH(std::string, field, method);
+      WATCH(scalar, adam, alpha);
+      WATCH(scalar, adam, beta1);
+      WATCH(scalar, adam, beta2);
+      WATCH(scalar, adam, eps);
+      WATCH(scalar, field, learningRate);
+      WATCH(scalar, field, offset);
+      WATCH(scalar, field, coffset);
+      if (dirty) {
+          trace.clear();
 
-  //   once = false;
-  //   auto x = ParameterManager::instance().get<scalar>("path.x");
-  //   auto y = ParameterManager::instance().get<scalar>("path.y");
+          once = false;
+          auto x = ParameterManager::instance().get<scalar>("path.x");
+          auto y = ParameterManager::instance().get<scalar>("path.y");
 
-  //   auto learningRate = std::pow(10., ParameterManager::instance().get<scalar>("field.learningRate"));
-  //   auto stringMethod = ParameterManager::instance().get<std::string>("field.method");
-  //   optimizationMethod method = getMethod(stringMethod);
+          auto learningRate = std::pow(10., ParameterManager::instance().get<scalar>("field.learningRate"));
+          auto stringMethod = ParameterManager::instance().get<std::string>("field.method");
+          optimizationMethod method = getMethod(stringMethod);
 
-  //   cheb::complex pos = cheb::complex(x, y);
-  //   std::cout << "Starting path tracing at " << pos.real() << " + " << pos.imag() << "i\n";
-  //   cheb::complex prior = pos;
-  //   auto [state, location, positions, values, steps] = optimize(pos, method);
-  //   // auto [state, location, positions, values, steps] = BFGS(pos);
-  //   for (int32_t i = 0; i < positions.size(); ++i) {
-  //     trace.push_back(std::make_tuple(values[i], steps[i], positions[i]));
-  //     printf("\t[%03d]: f(%g + %gi) = %g + %gi -> %g + %gi\n", i, positions[i].real(), positions[i].imag(), values[i].real(), values[i].imag(), steps[i].real(), steps[i].imag());
-  //   }
+          cheb::complex pos = cheb::complex(x, y);
+          std::cout << "Starting path tracing at " << pos.real() << " + " << pos.imag() << "i\n";
+          cheb::complex prior = pos;
+          auto [state, location, positions, values, steps] = optimize(pos, method);
+          // auto [state, location, positions, values, steps] = BFGS(pos);
+          for (int32_t i = 0; i < positions.size(); ++i) {
+              trace.push_back(std::make_tuple(values[i], steps[i], positions[i]));
+              //printf("\t[%03d]: f(%g + %gi) = %g + %gi -> %g + %gi\n", i, positions[i].real(), positions[i].imag(), values[i].real(), values[i].imag(), steps[i].real(), steps[i].imag());
+          }
 
-  //   std::cout << "Final path position : " << location.real() << " + " << location.imag() << std::endl;
-  // }
-  // auto [domainMin, domainMax] = getDomain();
-  // glLoadIdentity();
-  // glUseProgram(0);
+          std::cout << "Final path position : " << location.real() << " + " << location.imag() << std::endl;
+      }
+      auto [domainMin, domainMax] = getDomain();
+      glLoadIdentity();
+      glUseProgram(0);
 
-  // glOrtho(domainMin.x(), domainMax.x(), domainMin.y(), domainMax.y(), 0, 1);
-  // // glOrtho(domainMin.x(), domainMax.x(), domainMax.y(), domainMin.y(), 0, 1);
-  // glBegin(GL_LINES);
-  // for (int32_t i = 0; i < trace.size() - 1; ++i) {
-  //   auto [fxl, dxl, pl] = trace[i];
-  //   auto [fxr, dxr, pr] = trace[i + 1];
-  //   glVertex2f(pl.real(), pl.imag());
-  //   glVertex2f(pr.real(), pr.imag());
-  // }
+      glOrtho(domainMin.x(), domainMax.x(), domainMin.y(), domainMax.y(), 0, 1);
+      // glOrtho(domainMin.x(), domainMax.x(), domainMax.y(), domainMin.y(), 0, 1);
+      glBegin(GL_LINES);
+      for (int32_t i = 0; i < trace.size() - 1; ++i) {
+          auto [fxl, dxl, pl] = trace[i];
+          auto [fxr, dxr, pr] = trace[i + 1];
+          glVertex2f(pl.real(), pl.imag());
+          glVertex2f(pr.real(), pr.imag());
+      }
 
-  // glEnd();
-
+      glEnd();
+  }
   glColor4f(0.8f, 0.f, 0.f, 1);
 }

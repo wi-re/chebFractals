@@ -2,6 +2,7 @@
 #include <imgui/imgui.h>
 #include <iostream>
 #include <tools/stb_image_write.h>
+#include <yaml-cpp/yaml.h>
 
 void GUI::keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods) {
   static bool emit = false;
@@ -97,10 +98,48 @@ void GUI::keyCallback(GLFWwindow *window, int key, int scancode, int action, int
     std::cout << std::setprecision(16) << std::hexfloat << xmin << " " << ymin << " " << xmax << " " << ymax << std::endl << std::defaultfloat;
     break;
 
+  case GLFW_KEY_S:
+  {
+      std::ofstream ofile("render.config");
+      ofile << "xmin: " << std::setprecision(16) << std::hexfloat << xmin << std::defaultfloat << std::endl;
+      ofile << "ymin: " << std::setprecision(16) << std::hexfloat << ymin << std::defaultfloat << std::endl;
+      ofile << "xmax: " << std::setprecision(16) << std::hexfloat << xmax << std::defaultfloat << std::endl;
+      ofile << "ymax: " << std::setprecision(16) << std::hexfloat << ymax << std::defaultfloat << std::endl;
+
+      ofile << "width: " << screenWidth << std::endl;
+      ofile << "height: " << screenHeight << std::endl;
+
+      ofile << "multiplier: " << 1 << std::endl;
+
+      auto index = ParameterManager::instance().get<int32_t>("index");
+      auto coefficients = globalCoefficients[index];
+
+      ofile << "function: " << coefficients.size() << std::endl;
+
+      for (auto c : coefficients)
+          ofile << std::setprecision(16) << std::hexfloat << c << std::endl;
+      ofile.close();
+
+      std::ofstream cfile("render.yaml");
+
+      auto configTree = ParameterManager::instance().buildTree();
+      cfile << configTree << std::endl;
+      cfile.close();
+  }
+
+      std::cout << std::setprecision(16) << std::hexfloat << xmin << " " << ymin << " " << xmax << " " << ymax << std::endl << std::defaultfloat;
+      break;
+
   case GLFW_KEY_R:
     ParameterManager::instance().get<int32_t>("field.nx") = screenWidth;
     ParameterManager::instance().get<int32_t>("field.ny") = screenHeight;
+    ParameterManager::instance().get<bool>("recording.active") = true;
+    ParameterManager::instance().get<scalar>("field.offset") = ParameterManager::instance().get<scalar>("recording.min_offset");
     break;
+  case GLFW_KEY_Q:
+      ParameterManager::instance().get<int32_t>("field.nx") = screenWidth;
+      ParameterManager::instance().get<int32_t>("field.ny") = screenHeight;
+      break;
   case GLFW_KEY_E:
     ParameterManager::instance().get<int32_t>("field.nx") = 128;
     ParameterManager::instance().get<int32_t>("field.ny") = 128;
@@ -137,9 +176,6 @@ void GUI::keyCallback(GLFWwindow *window, int key, int scancode, int action, int
     ParameterManager::instance().get<std::string>("field.method") = "BFGS";
     break;
 
-  case GLFW_KEY_S: {
-    exportFlag = true;
-  }
   }
 }
 bool trackingLeft = false;
@@ -193,3 +229,33 @@ void GUI::cursorPositionCallback(GLFWwindow *window, double xpos, double ypos) {
   }
 }
 void GUI::scrollCallback(GLFWwindow *window, double xoffset, double yoffset) {}
+
+void GUI::sizeCallback(GLFWwindow* window, int width, int height) {
+    int32_t oldWidth = screenWidth;
+    int32_t oldHeight = screenHeight;
+
+    screenWidth = width;
+    screenHeight = height;
+
+    static auto& xmin = ParameterManager::instance().get<scalar>("domain.xmin");
+    static auto& xmax = ParameterManager::instance().get<scalar>("domain.xmax");
+    static auto& ymin = ParameterManager::instance().get<scalar>("domain.ymin");
+    static auto& ymax = ParameterManager::instance().get<scalar>("domain.ymax");
+
+    auto xgrowth = 1. + ( (((double)screenWidth) / ((double)oldWidth) -1.) / 2.);
+    auto ygrowth = 1. + ( (((double)screenHeight) / ((double)oldHeight) - 1.) / 2.);
+
+    auto xcenter = (xmin + xmax) / 2.;
+    auto ycenter = (ymin + ymax) / 2.;
+    auto dx = (xmax - xmin) / 2.;
+    auto dy = (ymax - ymin) / 2.;
+
+
+    std::cout << "[ " << xmin << " : " << xmax << " ] growth: " << xgrowth << " center: " << xcenter << " d: " << dx << std::endl;
+    std::cout << "[ " << ymin << " : " << ymax << " ] growth: " << ygrowth << " center: " << ycenter << " d: " << dy << std::endl;
+
+    xmin = xcenter - dx * xgrowth;
+    xmax = xcenter + dx * xgrowth;
+    ymin = ycenter - dy * ygrowth;
+    ymax = ycenter + dy * ygrowth;
+}

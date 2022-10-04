@@ -18,7 +18,7 @@ void GUI::initGL() {
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_COMPAT_PROFILE);
   glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-  glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+  glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
 
   window = glfwCreateWindow(screenWidth, screenHeight, "OmniFlow", NULL, NULL);
   if (window == NULL)
@@ -53,9 +53,11 @@ void GUI::initGL() {
   io.Fonts->AddFontFromFileTTF("NotoMono-Regular.ttf", 16.0f);
   clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
+  glfwSetWindowSizeCallback(window, [](GLFWwindow* window, int width, int height) {GUI::instance().sizeCallback(window, width, height); });
+
   glfwSetKeyCallback(window, [](GLFWwindow *window, int key, int scancode, int action, int mods) { GUI::instance().keyCallback(window, key, scancode, action, mods); });
-//   glfwSetCursorPosCallback(window, [](GLFWwindow *window, double xpos, double ypos) { GUI::instance().cursorPositionCallback(window, xpos, ypos); });
-//   glfwSetMouseButtonCallback(window, [](GLFWwindow *window, int button, int action, int mods) { GUI::instance().mouseButtonCallback(window, button, action, mods); });
+   glfwSetCursorPosCallback(window, [](GLFWwindow *window, double xpos, double ypos) { GUI::instance().cursorPositionCallback(window, xpos, ypos); });
+   glfwSetMouseButtonCallback(window, [](GLFWwindow *window, int button, int action, int mods) { GUI::instance().mouseButtonCallback(window, button, action, mods); });
 //   glfwSetScrollCallback(window, [](GLFWwindow *window, double xpos, double ypos) { GUI::instance().scrollCallback(window, xpos, ypos); });
   glfwSwapInterval(0);
   initRender();

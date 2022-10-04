@@ -87,7 +87,7 @@ complexState clenshawDeriv(cheb::complex val, const cheb::svec &ak) {
 std::tuple<cheb::complex, cheb::complex, cheb::complex> evalPolynomial(cheb::complex location) {
   auto [fr, fi] = clenshawDeriv(location, globalFunction.funs[0].coeffs());
 
-  cheb::complex f(fr.f, fi.f);
+  cheb::complex f(fr.f + realOffset, fi.f + complexOffset);
   Jacobian J(fr.J.dfdx, fi.J.dfdx);
   Hessian H(fr.H.d2fdx2, fr.H.d2fdxy, fi.H.d2fdx2, fi.H.d2fdxy);
   return std::make_tuple(f, cheb::complex(J.dfdx, J.dfdy), cheb::complex(H.d2fdx2, H.d2fdyx));
@@ -95,6 +95,9 @@ std::tuple<cheb::complex, cheb::complex, cheb::complex> evalPolynomial(cheb::com
 
 FunctionState evalSquarePolynomial(cheb::complex location) {
   auto [fr, fi] = clenshawDeriv(location, globalFunction.funs[0].coeffs());
+
+  fr.f += realOffset;
+  fi.f += complexOffset;
 
   auto f = fr.f * fr.f + fi.f * fi.f;
 

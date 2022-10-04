@@ -9,8 +9,339 @@
 #include <filesystem>
 
 
+struct progressBar {
+    std::chrono::high_resolution_clock::time_point start, lastTime;
+    int32_t frames, lastFrame = 0;
+
+    progressBar(int32_t targetFrames) :frames(targetFrames) {
+        start = std::chrono::high_resolution_clock::now();
+    };
+
+    void update(int32_t current, int32_t updateRate) {
+        std::ios cout_state(nullptr);
+        cout_state.copyfmt(std::cout);
+        if (current >= lastFrame + updateRate) {
+            auto progress = ((double)current) / ((double)frames);
+            auto now = std::chrono::high_resolution_clock::now();
+            lastTime = now;
+            int barWidth = 70;
+            std::cout << "Rendering " << std::setw(4) << current;
+            if (frames != -1)
+                std::cout << "/" << std::setw(4) << frames;
+            std::cout << " [";
+            int pos = barWidth * progress;
+            for (int i = 0; i < barWidth; ++i) {
+                if (i < pos)
+                    std::cout << "=";
+                else if (i == pos)
+                    std::cout << ">";
+                else
+                    std::cout << " ";
+            }
+            std::cout << "] " << std::setw(3) << int(progress * 100.0) << " ";
+            auto dur = std::chrono::duration_cast<std::chrono::milliseconds>(now - start);
+            if (dur.count() < 100 || progress < 1e-3f) {
+                std::cout << " ---/---s  ";
+            }
+            else {
+                auto totalTime =
+                    ((float)std::chrono::duration_cast<std::chrono::microseconds>(now - start).count()) / 1000.f / 1000.f;
+                std::cout << std::fixed << std::setprecision(0) << " " << std::setw(3) << totalTime << "/" << std::setw(3)
+                    << (totalTime / progress) << "s  ";
+            }
+
+
+        }
+        std::cout << "\r";
+        std::cout.flush();
+        std::cout.copyfmt(cout_state);
+    }
+    void update(int32_t x, int32_t y, int32_t updateRate) {
+        std::ios cout_state(nullptr);
+        cout_state.copyfmt(std::cout);
+        int32_t current = x + y * 1920;
+        if (current >= lastFrame + updateRate) {
+            auto progress = ((double)current) / ((double)frames);
+            auto now = std::chrono::high_resolution_clock::now();
+            lastTime = now;
+            int barWidth = 70;
+            std::cout << "Rendering " << std::setw(5) << x << std::setw(5) << y;
+            if (frames != -1)
+                std::cout << "/" << std::setw(5) << 1920 << std::setw(5) << 1080;
+            std::cout << " [";
+            int pos = barWidth * progress;
+            for (int i = 0; i < barWidth; ++i) {
+                if (i < pos)
+                    std::cout << "=";
+                else if (i == pos)
+                    std::cout << ">";
+                else
+                    std::cout << " ";
+            }
+            std::cout << "] " << std::setw(3) << int(progress * 100.0) << " ";
+            auto dur = std::chrono::duration_cast<std::chrono::milliseconds>(now - start);
+            if (dur.count() < 100 || progress < 1e-3f) {
+                std::cout << " ---/---s  ";
+            }
+            else {
+                auto totalTime =
+                    ((float)std::chrono::duration_cast<std::chrono::microseconds>(now - start).count()) / 1000.f / 1000.f;
+                std::cout << std::fixed << std::setprecision(0) << " " << std::setw(3) << totalTime << "/" << std::setw(3)
+                    << (totalTime / progress) << "s  ";
+            }
+
+
+        }
+        std::cout << "\r";
+        std::cout.flush();
+        std::cout.copyfmt(cout_state);
+    }
+    void end() {
+        std::cout << std::endl;
+    }
+};
+#include <vector>
+#include <fstream>
+#include <filesystem>
+
+std::vector<std::vector<double>> chebyshevData(std::string file) {
+
+    constexpr std::size_t width = 1920, height = 1080;
+
+    struct float4 { float x, y, z, w; };
+    struct double3 { double x, y, z; };
+    struct float3 { float x, y, z; };
+    struct int3 { int32_t x, y, z; };
+
+    struct Matrix4x4d {
+        double data[4 * 4] = {
+            0., 0., 0., 0., 0., 0., 0., 0.,
+            0., 0., 0., 0., 0., 0., 0., 0. };
+    };
+
+    struct isoFunctionState {
+        // iso function information
+        double(*isoFunctionA)(double, double, double);  // function pointer to first iso function (A)
+        double(*isoFunctionB)(double, double, double);  // function pointer to second iso function (B)
+        Matrix4x4d matrixA =                            // transformation matrix applied to isofunction A
+        { 1.,0.,0.,0.,
+         0.,1.,0.,0.,
+         0.,0.,1.,0.,
+         0.,0.,0.,1. };
+        Matrix4x4d matrixB =                            // transformation matrix applied to isofunction B
+        { 1.,0.,0.,0.,
+         0.,1.,0.,0.,
+         0.,0.,1.,0.,
+         0.,0.,0.,1. };
+        // blending and isosurface parameters
+        // The next parameter describes the blend mode to use when evaluating the scalar field with:
+        // blendmode =  0 : A
+        // blendmode =  1 : B
+        // blendmode =  2 : A + B
+        // blendmode =  3 : A - B
+        // blendmode =  4 : A * B + blendBias
+        // blendmode =  5 : 0.5 ( A + B - sqrt(A^2 + B^2))
+        // blendmode =  6 : 0.5 ( A + B + sqrt(A^2 + B^2))
+        // blendmode =  7 : A / B
+        // blendmode =  8 : blendParameter * A + (1 - blendParameter) * B
+        // blendmode =  9 : max(A,B)
+        // blendmode = 10 : min(A,B)
+        // blendmode = 11 : - blendA0 / (1 + A^2 / blendA1 + B^2 / blendA2)
+        int32_t blendMode = 0;
+        double blendParameter = 0.5;                    // linear blend weight for blendmode 8
+        double blendBias = 0.01;                        // bias parameter for multiplying isosurfaces for blendmode 4
+        double blendA0 = 0.019;                         // parameter for blendmode 11
+        double blendA1 = 0.589;                         // parameter for blendmode 11
+        double blendA2 = 0.943;                         // parameter for blendmode 11
+        double isoLevel = 0.0;                          // offset value applied to any evaluated isofunction, set to negative for blendmode 11
+
+        // gradient settings
+        int32_t diffScheme = 0;                         // flag to pick gradient scheme: 0 is central finite, 1 is forward finite, 3 is chebyshev
+        int32_t order = 2;                              // order for finite difference schemes (2,4,6,8 for central; 1,2,3,4,5,6 for forward)
+        bool autoScale = true;                          // automatically scale step width for x as h = sqrt(x_+ - x)
+        double h = DBL_EPSILON;                         // manual step width for finite differences
+        // sturm sequence settings
+        int32_t splitDegree = 50;                       // degree at which proxy functions should be split for computational efficiency
+        bool useQSeries = false;                        // utilize quotient based sturm sequences instead of remainder based
+        double thresholdA = 12.0;                       // numerical precision threshold during sturm sequence construction
+        double thresholdB = 500.0;                      // numerical precision threshold during sturm sequence construction
+        // domain settings
+        float3 minDomain = float3{ -1.5f, -1.5f, -1.5f }; // minimum of AABB surrounding the isofunction
+        float3 maxDomain = float3{ 1.5f,  1.5f,  1.5f }; // maximum of AABB surrounding the isofunction
+        // general settings
+        int32_t chebyshevMethod = 0;                    // 0 for sturm sequence based and 1 for qr-based root finding
+        bool offsetErrors = false;                      // determine finite step errors, WARNING: very slow
+        bool lipschitz = false;                         // evaluate approximate finite lipschitz constant of isofunction, WARNING: slow
+        // numerical settings
+        bool highPrecisionMode = false;                 // utilize high precision shifting mode as described in the paper
+        double lowPrecisionEpsilon = 1.;                // epsilon factor for the second proxy in high precision mode
+        double highPrecisionEpsilon = 7.;               // epsilon factor for the initial proxy in high precision mode
+        bool polishRoots = true;                        // polish roots using Newton iterations
+        int32_t newtonLimit = 16;                       // maximum number of Newton iterations that should be performed
+        // misc settings
+        int32_t breakPoint = 2;                         // value to shift function by based on approximation errors (with factor 10^breakpoint)
+
+        int32_t intersectionMethod = 1;
+
+        // sphere and segment tracing parameters
+        int32_t maximumIterations = -1;
+        bool autoLipschitz = true;
+        double globalLipschitz = 1.0;
+        double segmentAmplification = 1.0;
+        double sstThreshold = -5.0;
+
+        // Sherstyuk parameters
+        int32_t subIntervalCount = 2;
+
+        // AMP Parameters
+        int32_t AMPIntervalCount = 4;
+        double tau1 = 1e-3;
+        double tau2 = 1e-1;
+        double tau3 = 1e-1;
+        double AMPepsilon = 1e-12;
+        bool useTaylorTest = false;
+
+    };
+    struct isoFunctionStatistics {
+        double3 origin;
+        double3 direction;
+        int32_t rayIndex;
+        // hit information
+        bool intersectedAABB = false;                   // indicates if the scalar field bounding box was intersected
+        bool intersectedSurface = false;                // indicates if the actual isosurface was intersected
+        double depth = 0.0;                             // distance value for which the isosurface was intersected
+        // chebyshev information
+        int32_t degree = 0;                             // degree of base-proxy function
+        double minCoeff = 0.0;                          // minimum coefficient of base-proxy function
+        double maxCoeff = 0.0;                          // maximum coefficient of base-proxy function
+        //std::vector<double> coefficients;               // vector containing all coefficients of base-proxy function
+        // proxy information (not always defined)
+        bool hasLipschitzInformation = false;
+        double fmin, fmax;                              // approximate minimum and maximum function value using base-proxy
+        double gmin, gmax;                              // approximate minimum and maximum function derivative value using base-proxy
+        // proxy information (always defined)
+        double epsilon_a = 0.;                          // degree^2 based approximation error
+        double epsilon_u = 0.;                          // cheb::eps based approximation error
+        double value = 0.;                              // value that isofunction was shifted by based on approximation errors
+        // error information (not always defined)
+        bool hasIntegerErrors = false;
+        int32_t error = 0;                              // error in finite precision steps on the actual function
+        int32_t errorP = 0;                             // error in finite precision steps on the proxy function
+        // error information based on function
+        double ferror = 0.;                             // result of evaluating actual function at approximate intersection
+        double ferrorp = 0.;                            // result of evaluating proxy function at approximate intersection
+        // timing information
+        double timeForProxy = 0.0;                      // time to construct proxy for the given ray in ms
+        double timeForRootFinding = 0.0;                // time to find roots on proxy function
+        // surface information
+        double3 gradients{ 0.,0.,0. };                  // approximate gradients of scalar field at intersection
+        // Chebyshev Surfaces
+        int32_t numRoots = 0;                           // approximate number of roots along ray, only accurate without subdivisions & high precision
+
+        // sphere tracing
+        int64_t sphereTracingIterations;
+        double sphereTracingStep;
+        // segment tracing
+        int32_t segmentTracingIterations;
+        double segmentTracingStep;
+        double localLipschitzConstant;
+        // LG Surfaces
+        int32_t LGdepth;
+        int32_t RFdepth;
+        double localLConstant;
+        double localGConstant;
+        // AMP 09
+        int32_t AMPIterations;
+        double AMPStep;
+        double AMPWidth;
+        // Sherstyuk
+        int32_t SherstyukIterations;
+        std::tuple<double, double, double, double, double, double> SherstyukCoefficients;
+        // misc information
+        bool hasRankInformation = false;
+        int3 ranks{ 0,0,0 };                            // if chebyshev gradients were used this contains the degrees of the gradient functions
+    };
+
+
+    std::cout << "Reading from " << file << std::endl;
+    std::ifstream in;
+    in.open(file, std::ios::binary);
+    if (!in.is_open()) { std::cerr << "Could not open file!" << std::endl; throw std::invalid_argument{ "File does not exist" }; }
+
+    std::size_t bufferSize = std::max(sizeof(isoFunctionState), sizeof(isoFunctionStatistics));
+    std::byte* buffer = new std::byte[bufferSize + 1];
+    std::size_t numCoeffs = 0;
+    in.read((char*)buffer, sizeof(isoFunctionState));
+    //std::cout << sizeof(isoFunctionState) << "\t" << sizeof isoFunctionStatistics << std::endl;
+
+    auto state = *reinterpret_cast<isoFunctionState*>(buffer);
+    std::vector<std::vector<double>> coefficients;
+    std::vector<isoFunctionStatistics> data;
+    data.resize(width * height);
+    //if (state.intersectionMethod == 1 && state.chebyshevMethod == 1) {
+    //    coefficients.resize(width * height);
+    //}
+    auto pb = progressBar(width * height);
+     std::atomic<int32_t> i = 0;
+    for (int32_t x = 0; x < width; ++x) {
+        for (int32_t y = 0; y < height; ++y) {
+            //pb.update(x, y, 1);
+            if(++i % 4096 == 0)
+                pb.update(i, width);
+            in.read((char*)buffer, sizeof(isoFunctionStatistics));
+            //std::cout << numCoeffs << std::endl;
+            isoFunctionStatistics& pixelStats = *reinterpret_cast<isoFunctionStatistics*>(buffer);
+            //std::cout << pixelStats.rayIndex << "\t";
+            //std::cout << numCoeffs << std::endl;
+            //std::cout << numCoeffs << std::endl;
+            auto tempBuff = new std::vector<double>();
+            //memcpy((char*) &pixelStats.coefficients, (char*) tempBuff, sizeof(*tempBuff));
+            if (state.intersectionMethod == 1 && state.chebyshevMethod == 1) {
+                in.read((char*)&numCoeffs, sizeof(numCoeffs));
+                auto localCoefficients = std::vector<double>();
+                localCoefficients.resize(numCoeffs);
+                if (numCoeffs > 1) {
+                    in.read((char*)localCoefficients.data(), sizeof(double) * numCoeffs);
+                }
+                if (numCoeffs > 2) {
+                    coefficients.push_back(localCoefficients);
+                }
+            }
+            else {
+                //pixelStats.coefficients = std::vector<double>();
+            }
+            auto i = (height - y - 1) * width + x;
+            data[i] = pixelStats;
+        }
+    }
+
+
+    return coefficients;
+}
+
+
+
 int main(int argc, char* argv[]) 
 {
+
+    //globalCoefficients = chebyshevData("Z:/surfaceData/01 - Sphere/Sphere - Chebyshev QR-Decomposition -  - 2022-04-02_14-48-11.log");
+    //globalCoefficients = chebyshevData("Z:/surfaceData/02 - Cube/Cube - Chebyshev QR-Decomposition -  - 2022-04-03_16-39-04.log");
+    //globalCoefficients = chebyshevData("Z:/surfaceData/03 - Bohemian Star/bohemianStar - Chebyshev QR-Decomposition -  - 2022-04-02_12-38-28.log");
+    //globalCoefficients = chebyshevData("Z:/surfaceData/04 - Exponential Cube/exponentialCube - Chebyshev QR-Decomposition -  - 2022-04-03_13-22-24.log");
+    //globalCoefficients = chebyshevData("Z:/surfaceData/05 - Root SoR/rootSurface - Chebyshev QR-Decomposition -  - 2022-04-02_15-11-12.log");
+    //globalCoefficients = chebyshevData("Z:/surfaceData/06 - Spike 2D/spike - Chebyshev QR-Decomposition -  - 2022-04-05_17-32-12.log");
+    //globalCoefficients = chebyshevData("Z:/surfaceData/07 - Log SoR/SOR - Chebyshev QR-Decomposition -  - 2022-04-03_13-21-17.log");
+    //globalCoefficients = chebyshevData("Z:/surfaceData/08 - Exponential 2D/hat - Chebyshev QR-Decomposition -  - 2022-04-03_21-37-52.log");
+    //globalCoefficients = chebyshevData("Z:/surfaceData/09 - Morph/constantDistance m Torus - Chebyshev QR-Decomposition -  - 2022-04-03_13-11-43.log");
+    //globalCoefficients = chebyshevData("Z:/surfaceData/10 - Union (soft)/Sphere ^ Torus - Chebyshev QR-Decomposition -  - 2022-04-04_15-22-52.log");
+    //globalCoefficients = chebyshevData("Z:/surfaceData/11 - Blend 1/QuarticCylinder blend Torus - Chebyshev QR-Decomposition -  - 2022-04-04_13-27-09.log");
+    //globalCoefficients = chebyshevData("Z:/surfaceData/12 - Union (max)/Sphere v Torus(hard) - Chebyshev QR-Decomposition -  - 2022-04-06_23-52-26.log");
+    //globalCoefficients = chebyshevData("Z:/surfaceData/13 - Blend 2/C8 blend Torus - Chebyshev QR-Decomposition -  - 2022-04-04_13-29-47.log");
+    //globalCoefficients = chebyshevData("Z:/surfaceData/14 - Cut (soft)/Sphere v Torus - Chebyshev QR-Decomposition -  - 2022-04-04_16-49-58.log");
+    //globalCoefficients = chebyshevData("Z:/surfaceData/15 - Blend 3/Klein blend C8 - Chebyshev QR-Decomposition -  - 2022-04-04_15-19-54.log");
+    //globalCoefficients = chebyshevData("Z:/surfaceData/16 - Cut (hard)/Sphere ^ Torus(hard) - Chebyshev QR-Decomposition -  - 2022-04-05_11-24-31.log");
+    //globalCoefficients = chebyshevData("Z:/surfaceData/17 - Kiss/Kiss - Chebyshev QR-Decomposition -  - 2022-04-05_13-15-49.log");
+
     // f(x) = cos(13x) * sin(25x)
     globalFunction = cheb::Function([](cheb::scalar x){ return std::cos(x * 13.) * sin(x * 25.);},cheb::Domain{-1.,1.});
     globalCoefficients.push_back(globalFunction.funs[0].coeffs());
